@@ -1,9 +1,17 @@
 import formatCheckResult from '../src/lib/format-check-result';
-import { SUCCESS_STATUS_CODE, ERROR_STATUS_CODE, WARNING_STATUS_CODE } from '../src/constants';
+import {
+  SUCCESS_STATUS_CODE,
+  ERROR_STATUS_CODE,
+  WARNING_STATUS_CODE,
+} from '../src/constants';
 
 describe('formatCheckResult', () => {
   it('should return a healthy status for SUCCESS_STATUS_CODE', () => {
-    const result = formatCheckResult('redis', { code: SUCCESS_STATUS_CODE }, 50);
+    const result = formatCheckResult(
+      'redis',
+      { code: SUCCESS_STATUS_CODE },
+      50,
+    );
     expect(result).toEqual({
       name: 'redis',
       healthy: true,
@@ -14,7 +22,11 @@ describe('formatCheckResult', () => {
   });
 
   it('should return a warning status for WARNING_STATUS_CODE', () => {
-    const result = formatCheckResult('redis', { code: WARNING_STATUS_CODE }, 100);
+    const result = formatCheckResult(
+      'redis',
+      { code: WARNING_STATUS_CODE },
+      100,
+    );
     expect(result).toEqual({
       name: 'redis',
       healthy: true,
@@ -25,7 +37,11 @@ describe('formatCheckResult', () => {
   });
 
   it('should return an unhealthy status for ERROR_STATUS_CODE', () => {
-    const result = formatCheckResult('redis', { code: ERROR_STATUS_CODE, errorMessage: 'Connection failed' }, 200);
+    const result = formatCheckResult(
+      'redis',
+      { code: ERROR_STATUS_CODE, errorMessage: 'Connection failed' },
+      200,
+    );
     expect(result).toEqual({
       name: 'redis',
       healthy: false,

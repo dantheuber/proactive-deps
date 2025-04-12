@@ -6,17 +6,13 @@ import {
   ERROR_STATUS_MESSAGE,
   WARNING_STATUS_MESSAGE,
 } from '../constants';
-import {
-  DependencyCheckResult,
-  DependencyStatus,
-} from "../types";
+import { DependencyCheckResult, DependencyStatus } from '../types';
 
 export default function formatCheckResult(
   dependencyName: string,
   result: DependencyCheckResult,
-  latencyMs: number = 0
+  latencyMs: number = 0,
 ): DependencyStatus {
-  
   const status: DependencyStatus & { error?: Error; errorMessage?: string } = {
     name: dependencyName,
     healthy: false,
@@ -44,4 +40,4 @@ export default function formatCheckResult(
   }
 
   return status as DependencyStatus;
-};
+}

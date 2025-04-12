@@ -43,7 +43,10 @@ describe('DependencyMonitor', () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
-      check: async () => ({ code: ERROR_STATUS_CODE, errorMessage: 'Connection failed' }),
+      check: async () => ({
+        code: ERROR_STATUS_CODE,
+        errorMessage: 'Connection failed',
+      }),
       cacheDurationMs: 10000,
     };
 
@@ -82,7 +85,10 @@ describe('DependencyMonitor', () => {
     const dependency2 = {
       name: 'db',
       description: 'Database',
-      check: async () => ({ code: ERROR_STATUS_CODE, errorMessage: 'Connection failed' }),
+      check: async () => ({
+        code: ERROR_STATUS_CODE,
+        errorMessage: 'Connection failed',
+      }),
       cacheDurationMs: 10000,
     };
 
@@ -125,7 +131,9 @@ describe('DependencyMonitor', () => {
   });
 
   it('should throw an error if the dependency is not found', async () => {
-    await expect(monitor.getStatus('nonexistent')).rejects.toThrow('Dependency nonexistent not found');
+    await expect(monitor.getStatus('nonexistent')).rejects.toThrow(
+      'Dependency nonexistent not found',
+    );
   });
 
   it('should only run the dependency check after the cache duration has expired', async () => {

@@ -6,7 +6,11 @@ import {
   DEFAULT_REFRESH_THRESHOLD_MS,
   ERROR_STATUS_CODE,
 } from './constants';
-import { DependencyCheck, DependencyMonitorOptions, DependencyStatus } from './types';
+import {
+  DependencyCheck,
+  DependencyMonitorOptions,
+  DependencyStatus,
+} from './types';
 import formatCheckResult from './lib/format-check-result';
 import formatPrometheusMetrics from './lib/format-prometheus-metrics';
 
@@ -29,8 +33,10 @@ class DependencyMonitor {
   constructor(options: DependencyMonitorOptions = {}) {
     this.checkTimeoutMs = options.checkTimeoutMs || DEFAULT_CHECK_TIMEOUT_MS;
     this.cacheDurationMs = options.cacheDurationMs || DEFAULT_CACHE_DURATION_MS;
-    this.refreshThresholdMs = options.refreshThresholdMs || DEFAULT_REFRESH_THRESHOLD_MS;
-    this.checkIntervalMs = options.checkIntervalMs || DEPENDENCY_CHECK_INTERVAL_MS;
+    this.refreshThresholdMs =
+      options.refreshThresholdMs || DEFAULT_REFRESH_THRESHOLD_MS;
+    this.checkIntervalMs =
+      options.checkIntervalMs || DEPENDENCY_CHECK_INTERVAL_MS;
 
     this.cache = createCache({});
 
@@ -48,7 +54,7 @@ class DependencyMonitor {
     }
     this.dependencyCheckInterval = setInterval(
       this.getAllDependenciesStatus.bind(this),
-      this.checkIntervalMs
+      this.checkIntervalMs,
     );
     this.dependencyCheckInterval.unref(); // Allow the process to exit if this is the only thing running
   }
@@ -67,31 +73,30 @@ class DependencyMonitor {
    * @param {DependencyCheck} dependency - The dependency to check.
    * @returns {Promise<DependencyStatus>} The status of the dependency.
    */
-  private async getDependencyStatus(dependency: DependencyCheck): Promise<DependencyStatus> {
+  private async getDependencyStatus(
+    dependency: DependencyCheck,
+  ): Promise<DependencyStatus> {
     try {
-      return await this.cache.wrap(dependency.name, async () => {
-        const start = Date.now();
-        const checkResults = await dependency.check();
-        const latencyMs = Date.now() - start;
-        return formatCheckResult(dependency.name, checkResults, latencyMs, );
-      }, {
-        ttl: dependency.cacheDurationMs,
-        refreshThreshold: this.refreshThresholdMs,
-      });
-    } catch (error) {
-      const status = formatCheckResult(
+      return await this.cache.wrap(
         dependency.name,
+        async () => {
+          const start = Date.now();
+          const checkResults = await dependency.check();
+          const latencyMs = Date.now() - start;
+          return formatCheckResult(dependency.name, checkResults, latencyMs);
+        },
         {
-          code: ERROR_STATUS_CODE,
-          error: error as Error,
-          errorMessage: `Error checking dependency ${dependency.name}`,
-        }
+          ttl: dependency.cacheDurationMs,
+          refreshThreshold: this.refreshThresholdMs,
+        },
       );
-      await this.cache.set(
-        dependency.name,
-        status,
-        dependency.cacheDurationMs,
-      );
+    } catch (error) {
+      const status = formatCheckResult(dependency.name, {
+        code: ERROR_STATUS_CODE,
+        error: error as Error,
+        errorMessage: `Error checking dependency ${dependency.name}`,
+      });
+      await this.cache.set(dependency.name, status, dependency.cacheDurationMs);
       return status;
     }
   }
@@ -102,7 +107,9 @@ class DependencyMonitor {
    * @returns {Promise<DependencyStatus[]>} An array of dependency statuses.
    */
   private async getAllDependenciesStatus(): Promise<DependencyStatus[]> {
-    const checkPromises = this.dependencies.map(async (dep) => this.getDependencyStatus(dep));
+    const checkPromises = this.dependencies.map(async (dep) =>
+      this.getDependencyStatus(dep),
+    );
 
     // Run all checks concurrently
     return await Promise.all(checkPromises);
@@ -120,7 +127,9 @@ class DependencyMonitor {
     if (cachedValue) {
       return cachedValue;
     } else {
-      const dependency = this.dependencies.find((dep) => dep.name === dependencyName);
+      const dependency = this.dependencies.find(
+        (dep) => dep.name === dependencyName,
+      );
       if (dependency) {
         return await this.getDependencyStatus(dependency);
       }
@@ -136,7 +145,6 @@ class DependencyMonitor {
     return await this.getAllDependenciesStatus();
   }
 
-  
   /**
    * Retrieves Prometheus-formatted metrics for all dependencies.
    *
@@ -154,6 +162,4 @@ class DependencyMonitor {
   }
 }
 
-export {
-  DependencyMonitor,
-};
+export { DependencyMonitor };
