@@ -24,6 +24,7 @@
     * [.register(dependency)](#DependencyMonitor+register)
     * [.getStatus(dependencyName)](#DependencyMonitor+getStatus) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.getAllStatuses()](#DependencyMonitor+getAllStatuses) ⇒ <code>Promise.&lt;Array.&lt;DependencyStatus&gt;&gt;</code>
+    * [.getPrometheusMetrics()](#DependencyMonitor+getPrometheusMetrics) ⇒
 
 <a name="new_DependencyMonitor_new"></a>
 
@@ -69,6 +70,20 @@
 
 **Kind**: instance method of [<code>DependencyMonitor</code>](#DependencyMonitor)  
 **Returns**: <code>Promise.&lt;Array.&lt;DependencyStatus&gt;&gt;</code> - <p>An array of dependency statuses.</p>  
+<a name="DependencyMonitor+getPrometheusMetrics"></a>
+
+### dependencyMonitor.getPrometheusMetrics() ⇒
+<p>Retrieves Prometheus-formatted metrics for all dependencies.</p>
+<p>This method fetches the status of all dependencies and generates
+Prometheus metrics strings for each dependency, including:</p>
+<ul>
+<li><code>dependency_latency_ms</code>: The latency of the dependency in milliseconds.</li>
+<li><code>dependency_health</code>: A binary value indicating the health of the dependency (1 for healthy, 0 for unhealthy).</li>
+</ul>
+
+**Kind**: instance method of [<code>DependencyMonitor</code>](#DependencyMonitor)  
+**Returns**: <p>A promise that resolves to a string containing Prometheus metrics
+for all dependencies, formatted as required by Prometheus.</p>  
 <a name="DependencyStatus"></a>
 
 ## DependencyStatus : <code>Object</code>
@@ -79,6 +94,7 @@
 
 | Name | Type | Description |
 | --- | --- | --- |
+| name | <code>string</code> | <p>The name of the dependency.</p> |
 | healthy | <code>boolean</code> | <p>Indicates whether the dependency is healthy.</p> |
 | code | <code>number</code> | <p>Status code (e.g., SUCCESS_STATUS_CODE, ERROR_STATUS_CODE, WARNING_STATUS_CODE).</p> |
 | message | <code>string</code> | <p>Status message (e.g., SUCCESS_STATUS_MESSAGE, ERROR_STATUS_MESSAGE, WARNING_STATUS_MESSAGE).</p> |

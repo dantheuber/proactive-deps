@@ -8,6 +8,7 @@ import {
 } from './constants';
 import { DependencyCheck, DependencyMonitorOptions, DependencyStatus } from './types';
 import formatCheckResult from './lib/format-check-result';
+import formatPrometheusMetrics from './lib/format-prometheus-metrics';
 
 /**
  * A class to monitor the health of dependencies and cache their statuses.
@@ -81,14 +82,17 @@ class DependencyMonitor {
         const start = Date.now();
         const checkResults = await dependency.check();
         const latencyMs = Date.now() - start;
-        return formatCheckResult(checkResults, latencyMs);
+        return formatCheckResult(dependency.name, checkResults, latencyMs, );
       }, { ttl: dependency.cacheDurationMs });
     } catch (error) {
-      const status = formatCheckResult({
-        code: ERROR_STATUS_CODE,
-        error: error as Error,
-        errorMessage: `Error checking dependency ${dependency.name}`,
-      });
+      const status = formatCheckResult(
+        dependency.name,
+        {
+          code: ERROR_STATUS_CODE,
+          error: error as Error,
+          errorMessage: `Error checking dependency ${dependency.name}`,
+        }
+      );
       await this.cache.set(
         dependency.name,
         status,
@@ -136,6 +140,23 @@ class DependencyMonitor {
    */
   public async getAllStatuses(): Promise<DependencyStatus[]> {
     return await this.getAllDependenciesStatus();
+  }
+
+  
+  /**
+   * Retrieves Prometheus-formatted metrics for all dependencies.
+   *
+   * This method fetches the status of all dependencies and generates
+   * Prometheus metrics strings for each dependency, including:
+   * - `dependency_latency_ms`: The latency of the dependency in milliseconds.
+   * - `dependency_health`: A binary value indicating the health of the dependency (1 for healthy, 0 for unhealthy).
+   *
+   * @returns A promise that resolves to a string containing Prometheus metrics
+   *          for all dependencies, formatted as required by Prometheus.
+   */
+  public async getPrometheusMetrics(): Promise<string> {
+    const statuses = await this.getAllDependenciesStatus();
+    return formatPrometheusMetrics(statuses);
   }
 }
 

@@ -1,6 +1,7 @@
 /**
  * Represents the status of a dependency.
  * @typedef {Object} DependencyStatus
+ * @property {string} name - The name of the dependency.
  * @property {boolean} healthy - Indicates whether the dependency is healthy.
  * @property {number} code - Status code (e.g., SUCCESS_STATUS_CODE, ERROR_STATUS_CODE, WARNING_STATUS_CODE).
  * @property {string} message - Status message (e.g., SUCCESS_STATUS_MESSAGE, ERROR_STATUS_MESSAGE, WARNING_STATUS_MESSAGE).
@@ -9,6 +10,7 @@
  * @property {number} latencyMs - The latency of the dependency check in milliseconds.
  */
 export type DependencyStatus = {
+  name: string;
   healthy: boolean;
   code: number;
   message: string;

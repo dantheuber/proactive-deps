@@ -11,8 +11,14 @@ import {
   DependencyStatus,
 } from "../types";
 
-export default function formatCheckResult(result: DependencyCheckResult, latencyMs: number = 0): DependencyStatus {
+export default function formatCheckResult(
+  dependencyName: string,
+  result: DependencyCheckResult,
+  latencyMs: number = 0
+): DependencyStatus {
+  
   const status: DependencyStatus & { error?: Error; errorMessage?: string } = {
+    name: dependencyName,
     healthy: false,
     code: ERROR_STATUS_CODE,
     message: ERROR_STATUS_MESSAGE,
