@@ -118,14 +118,14 @@ class DependencyMonitor {
   /**
    * Gets the status of a specific dependency by name.
    * @param {string} dependencyName - The name of the dependency.
-   * @returns {Promise<any>} The status of the dependency.
+   * @returns {Promise<DependencyStatus>} The status of the dependency.
    * @throws {Error} If the dependency is not found.
    */
-  public async getStatus(dependencyName: string): Promise<any> {
+  public async getStatus(dependencyName: string): Promise<DependencyStatus> {
     const cacheKey = dependencyName;
     const cachedValue = await this.cache.get(cacheKey);
     if (cachedValue) {
-      return cachedValue;
+      return cachedValue as DependencyStatus;
     } else {
       const dependency = this.dependencies.find(
         (dep) => dep.name === dependencyName,

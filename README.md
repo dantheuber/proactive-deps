@@ -105,8 +105,8 @@ console.log(metrics);
 # TYPE dependency_latency_ms gauge
 dependency_latency_ms{dependency="redis"} 5
 
-# HELP dependency_healthy Whether the dependency is currently healthy (1 = healthy, 0 = unhealthy)
-# TYPE dependency_healthy gauge
+# HELP dependency_health Whether the dependency is currently healthy (1 = healthy, 0 = unhealthy)
+# TYPE dependency_healty gauge
 dependency_healthy{dependency="redis"} 1
 */
 ```
