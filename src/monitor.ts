@@ -32,10 +32,7 @@ class DependencyMonitor {
     this.refreshThresholdMs = options.refreshThresholdMs || DEFAULT_REFRESH_THRESHOLD_MS;
     this.checkIntervalMs = options.checkIntervalMs || DEPENDENCY_CHECK_INTERVAL_MS;
 
-    this.cache = createCache({
-      ttl: this.cacheDurationMs,
-      refreshThreshold: this.refreshThresholdMs,
-    });
+    this.cache = createCache({});
 
     this.startDependencyCheckInterval();
   }
@@ -45,21 +42,15 @@ class DependencyMonitor {
    * @private
    */
   private startDependencyCheckInterval(): void {
+    /* istanbul ignore next */
     if (this.dependencyCheckInterval) {
       clearInterval(this.dependencyCheckInterval);
     }
-    this.dependencyCheckInterval = setInterval(this.getAllDependenciesStatus.bind(this), this.checkIntervalMs);
-  }
-
-  /**
-   * Stops the interval that checks the status of all dependencies.
-   * @private
-   */
-  private stopDependencyCheckInterval(): void {
-    if (this.dependencyCheckInterval) {
-      clearInterval(this.dependencyCheckInterval);
-      this.dependencyCheckInterval = null;
-    }
+    this.dependencyCheckInterval = setInterval(
+      this.getAllDependenciesStatus.bind(this),
+      this.checkIntervalMs
+    );
+    this.dependencyCheckInterval.unref(); // Allow the process to exit if this is the only thing running
   }
 
   /**
@@ -83,7 +74,10 @@ class DependencyMonitor {
         const checkResults = await dependency.check();
         const latencyMs = Date.now() - start;
         return formatCheckResult(dependency.name, checkResults, latencyMs, );
-      }, { ttl: dependency.cacheDurationMs });
+      }, {
+        ttl: dependency.cacheDurationMs,
+        refreshThreshold: this.refreshThresholdMs,
+      });
     } catch (error) {
       const status = formatCheckResult(
         dependency.name,
