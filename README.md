@@ -39,11 +39,11 @@ monitor.register({
 
 ### Getting Current Status
 ```js
-const status = await monitor.getStatus();
+const status = await monitor.getAllStatuses();
 console.log(status);
-// {
+// [{
 //   redis: { healthy: true, lastChecked: '...', latencyMs: 5 }
-// }
+// }]
 ```
 
 ### Prometheus Metrics Output
@@ -73,3 +73,6 @@ Other tools might let you know that a dependency was broken when you find out th
 - [ ] Built-in Prometheus metrics endpoint handler
 - [ ] Retry logic with exponential backoff
 - [ ] Custom alert hooks (email, Slack, etc.)
+
+## 📄 License
+MIT © 2025 Daniel Essig
