@@ -23,6 +23,7 @@ npm install proactive-deps
 
 ```js
 import { DependencyMonitor } from 'proactive-deps';
+import { SUCCESS_STATUS_CODE, ERROR_STATUS_CODE } from 'proactive-deps/constants';
 
 const monitor = new DependencyMonitor();
 
@@ -32,10 +33,46 @@ monitor.register({
   check: async () => {
     // Your health check logic here
     await redis.ping();
+    return {
+      code: SUCCESS_STATUS_CODE,
+      error: null,
+      errorMessage: null,
+    };
   },
   cacheDurationMs: 10000 // 10 seconds between checks
 });
 ```
+
+### What Should a Dependency Check Return?
+A registered dependency check should return an object of the following structure:
+
+#### When Healthy:
+```js
+{
+  code: SUCCESS_STATUS_CODE,
+  error: null,
+  errorMessage: null
+}
+```
+
+- `code`: A status code indicating success (e.g., `SUCCESS_STATUS_CODE`).
+- `error`: Should be `null` when the dependency is healthy.
+- `errorMessage`: Should be `null` when the dependency is healthy.
+
+#### When Errors Are Encountered:
+```js
+{
+  code: ERROR_STATUS_CODE,
+  error: new Error('Connection failed'),
+  errorMessage: 'Connection failed'
+}
+```
+
+- `code`: A status code indicating an error (e.g., `ERROR_STATUS_CODE`).
+- `error`: An `Error` object describing the issue.
+- `errorMessage`: A string describing the error in detail.
+
+This structure ensures consistency across all dependency checks and allows the monitor to handle and report errors effectively.
 
 ### Getting Current Status
 ```js
@@ -60,6 +97,11 @@ dependency_latency_ms{dependency="redis"} 5
 dependency_healthy{dependency="redis"} 1
 */
 ```
+
+## 📖 API Documentation
+For detailed API documentation, refer to the [API.md](./API.md) file.
+
+The `API.md` file contains comprehensive information about all exported classes, methods, and types in the library, generated using JSDoc.
 
 ## 🧠 Philosophy
 Other tools might let you know that a dependency was broken when you find out the hard way. `proactive-deps` helps you know in advance, by making it dead simple to wrap, register, and expose active health checks for the services your app relies on.
