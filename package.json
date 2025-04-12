@@ -1,8 +1,36 @@
 {
   "name": "proactive-deps",
   "version": "1.0.0",
-  "description": "",
+  "description": "A library for managing proactive dependency checks in Node.js applications.",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "homepage": "https://github.com/dantheuber/proactive-deps",
+  "bugs": {
+    "url": "https://github.com/dantheuber/proactive-deps/issues"
+  },
+  "keywords": [
+    "proactive",
+    "dependencies",
+    "dependency-check",
+    "node",
+    "typescript",
+    "cache",
+    "cache-dependency",
+    "prometheus",
+    "monitoring",
+    "metrics",
+    "performance",
+    "health-check",
+    "health",
+    "health-checks",
+    "healthcheck",
+    "health-checker",
+    "cache-manager"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dantheuber/proactive-deps.git"
+  },
   "scripts": {
     "build": "tsc",
     "test": "jest",
@@ -35,5 +63,8 @@
   },
   "dependencies": {
     "cache-manager": "^6.4.2"
-  }
+  },
+  "files": [
+    "dist/**/*"
+  ]
 }
