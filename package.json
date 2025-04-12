@@ -1,0 +1,70 @@
+{
+  "name": "proactive-deps",
+  "version": "1.0.2",
+  "description": "A library for managing proactive dependency checks in Node.js applications.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "homepage": "https://github.com/dantheuber/proactive-deps",
+  "bugs": {
+    "url": "https://github.com/dantheuber/proactive-deps/issues"
+  },
+  "keywords": [
+    "proactive",
+    "dependencies",
+    "dependency-check",
+    "node",
+    "typescript",
+    "cache",
+    "cache-dependency",
+    "prometheus",
+    "monitoring",
+    "metrics",
+    "performance",
+    "health-check",
+    "health",
+    "health-checks",
+    "healthcheck",
+    "health-checker",
+    "cache-manager"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dantheuber/proactive-deps.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "build:docs": "jsdoc2md --files ./src/**/*.ts --configure ./jsdoc2md.json > API.md",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "author": "Daniel Essig",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/cli": "^7.27.0",
+    "@babel/core": "^7.26.10",
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "@babel/plugin-proposal-object-rest-spread": "^7.20.7",
+    "@babel/preset-env": "^7.26.9",
+    "@babel/preset-typescript": "^7.27.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.0.0",
+    "babel-plugin-preserve-comment-header": "^1.0.1",
+    "jest": "^29.7.0",
+    "jsdoc": "^4.0.2",
+    "jsdoc-babel": "^0.5.0",
+    "jsdoc-plugin-typescript": "^3.2.0",
+    "jsdoc-to-markdown": "^7.1.1",
+    "prettier": "^3.5.3",
+    "ts-jest": "^29.3.1",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "cache-manager": "^6.4.2"
+  },
+  "files": [
+    "dist/**/*"
+  ]
+}
