@@ -1,6 +1,6 @@
 {
   "name": "proactive-deps",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A library for managing proactive dependency checks in Node.js applications.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
