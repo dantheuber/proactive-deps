@@ -33,6 +33,23 @@ describe('formatCheckResult', () => {
       lastChecked: expect.any(String),
     });
   });
+  it('should return a healthy status for when returning only SUCCESS_STATUS_CODE', () => {
+    const result = formatCheckResult(
+      dependency,
+      SUCCESS_STATUS_CODE,
+      50,
+    );
+    expect(result).toEqual({
+      name: 'redis',
+      description: 'Redis cache layer',
+      impact: 'Responses may be slower due to missing cache.',
+      healthy: true,
+      code: SUCCESS_STATUS_CODE,
+      status: SUCCESS_STATUS_MESSAGE,
+      latencyMs: 50,
+      lastChecked: expect.any(String),
+    });
+  });
 
   it('should return a warning status for WARNING_STATUS_CODE', () => {
     const result = formatCheckResult(
