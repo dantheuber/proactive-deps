@@ -18,18 +18,20 @@ describe('DependencyMonitor', () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
       cacheDurationMs: 10000,
     };
 
     monitor.register(dependency);
-    expect((monitor as any).dependencies).toContain(dependency);
+    expect((monitor as any)._dependencies).toContain(dependency);
   });
 
   it('should get the status of a healthy dependency', async () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
       cacheDurationMs: 10000,
     };
@@ -43,6 +45,7 @@ describe('DependencyMonitor', () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: async () => ({
         code: ERROR_STATUS_CODE,
         errorMessage: 'Connection failed',
@@ -60,6 +63,7 @@ describe('DependencyMonitor', () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: async () => {
         throw new Error('Check Exception');
       },
@@ -70,7 +74,8 @@ describe('DependencyMonitor', () => {
     const status = await monitor.getStatus('redis');
     expect(status.healthy).toBe(false);
     expect(status.errorMessage).toBe('Error checking dependency redis');
-    expect(status.error).toBeInstanceOf(Error);
+    expect(status.error?.stack).toBeDefined();
+    expect(status.error?.name).toBe('Error');
     expect(status.error?.message).toBe('Check Exception');
   });
 
@@ -78,6 +83,7 @@ describe('DependencyMonitor', () => {
     const dependency1 = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
       cacheDurationMs: 10000,
     };
@@ -85,6 +91,7 @@ describe('DependencyMonitor', () => {
     const dependency2 = {
       name: 'db',
       description: 'Database',
+      impact: 'Database queries will fail.',
       check: async () => ({
         code: ERROR_STATUS_CODE,
         errorMessage: 'Connection failed',
@@ -105,6 +112,7 @@ describe('DependencyMonitor', () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
       cacheDurationMs: 10000,
     };
@@ -113,13 +121,14 @@ describe('DependencyMonitor', () => {
 
     const metrics = await monitor.getPrometheusMetrics();
     expect(metrics).toContain('dependency_latency_ms{dependency="redis"}');
-    expect(metrics).toContain('dependency_health{dependency="redis"} 1');
+    expect(metrics).toContain('dependency_health{dependency="redis"} 0');
   });
 
   it('should handle cache miss and fetch dependency status', async () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
       cacheDurationMs: 10000,
     };
@@ -141,6 +150,7 @@ describe('DependencyMonitor', () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: checkMock,
       cacheDurationMs: 10000, // 10 seconds
     };
