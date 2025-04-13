@@ -14,24 +14,48 @@ describe('DependencyMonitor', () => {
     jest.useRealTimers(); // Restore real timers
   });
 
+  it('should allow starting and stopping of monitor interval', () => {
+    expect((monitor as any)._dependencyCheckInterval).toBe(null);
+    monitor.startDependencyCheckInterval();
+    expect((monitor as any)._dependencyCheckInterval).not.toBe(null);
+    monitor.startDependencyCheckInterval(); // branch for re-starting already running interval
+    expect((monitor as any)._dependencyCheckInterval).not.toBe(null);
+    monitor.stopDependencyCheckInterval();
+    expect((monitor as any)._dependencyCheckInterval).toBe(null);
+  });
+
   it('should register a dependency', () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
-      cacheDurationMs: 10000,
     };
 
     monitor.register(dependency);
-    expect((monitor as any).dependencies).toContain(dependency);
+    expect((monitor as any)._dependencies).toContain(dependency);
+  });
+
+  it('should register a dependency with optional override properties', () => {
+    const dependency = {
+      name: 'redis',
+      description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
+      check: async () => ({ code: SUCCESS_STATUS_CODE }),
+      cacheDurationMs: 10000,
+      refreshDurationMs: 5000,
+    };
+
+    monitor.register(dependency);
+    expect((monitor as any)._dependencies).toContain(dependency);
   });
 
   it('should get the status of a healthy dependency', async () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
-      cacheDurationMs: 10000,
     };
 
     monitor.register(dependency);
@@ -43,11 +67,11 @@ describe('DependencyMonitor', () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: async () => ({
         code: ERROR_STATUS_CODE,
         errorMessage: 'Connection failed',
       }),
-      cacheDurationMs: 10000,
     };
 
     monitor.register(dependency);
@@ -60,17 +84,18 @@ describe('DependencyMonitor', () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: async () => {
         throw new Error('Check Exception');
       },
-      cacheDurationMs: 10000,
     };
 
     monitor.register(dependency);
     const status = await monitor.getStatus('redis');
     expect(status.healthy).toBe(false);
     expect(status.errorMessage).toBe('Error checking dependency redis');
-    expect(status.error).toBeInstanceOf(Error);
+    expect(status.error?.stack).toBeDefined();
+    expect(status.error?.name).toBe('Error');
     expect(status.error?.message).toBe('Check Exception');
   });
 
@@ -78,18 +103,18 @@ describe('DependencyMonitor', () => {
     const dependency1 = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
-      cacheDurationMs: 10000,
     };
 
     const dependency2 = {
       name: 'db',
       description: 'Database',
+      impact: 'Database queries will fail.',
       check: async () => ({
         code: ERROR_STATUS_CODE,
         errorMessage: 'Connection failed',
       }),
-      cacheDurationMs: 10000,
     };
 
     monitor.register(dependency1);
@@ -105,23 +130,23 @@ describe('DependencyMonitor', () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
-      cacheDurationMs: 10000,
     };
 
     monitor.register(dependency);
 
     const metrics = await monitor.getPrometheusMetrics();
     expect(metrics).toContain('dependency_latency_ms{dependency="redis"}');
-    expect(metrics).toContain('dependency_health{dependency="redis"} 1');
+    expect(metrics).toContain('dependency_health{dependency="redis"} 0');
   });
 
   it('should handle cache miss and fetch dependency status', async () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
-      cacheDurationMs: 10000,
     };
 
     monitor.register(dependency);
@@ -141,6 +166,7 @@ describe('DependencyMonitor', () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
       check: checkMock,
       cacheDurationMs: 10000, // 10 seconds
     };

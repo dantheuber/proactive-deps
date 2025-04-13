@@ -1,163 +1,148 @@
 import { createCache, Cache as CacheManagerCache } from 'cache-manager';
 import {
-  DEPENDENCY_CHECK_INTERVAL_MS,
+  DEFAULT_CHECK_INTERVAL_MS,
   DEFAULT_CACHE_DURATION_MS,
-  DEFAULT_CHECK_TIMEOUT_MS,
   DEFAULT_REFRESH_THRESHOLD_MS,
   ERROR_STATUS_CODE,
 } from './constants';
 import {
-  DependencyCheck,
+  DependencyMonitorInterface,
   DependencyMonitorOptions,
+  DependencyCheckOptions,
   DependencyStatus,
 } from './types';
 import formatCheckResult from './lib/format-check-result';
 import formatPrometheusMetrics from './lib/format-prometheus-metrics';
 
 /**
- * A class to monitor the health of dependencies and cache their statuses.
+ * DependencyMonitor is a class that monitors the status of various dependencies
+ * (e.g., databases, APIs) and provides methods to check their health and latency.
+ * It uses a cache to store the results of the checks and can be configured
+ * to refresh the cache at specified intervals.
+ * It also provides a method to get Prometheus metrics for the monitored dependencies.
+ * @class DependencyMonitor
+ * @implements {DependencyMonitorInterface}
+ * @param {DependencyMonitorOptions} [options] - Optional configuration options for the monitor.
+ * @param {number} [options.cacheDurationMs] - Duration (in milliseconds) to cache the dependency check result.
+ * @param {number} [options.refreshThresholdMs] - Duration (in milliseconds) to refresh the dependency check result.
+ * @param {number} [options.checkIntervalMs] - Interval (in milliseconds) for running dependency checks.
+ * @example
+ * const monitor = new DependencyMonitor({
+ *   cacheDurationMs: 60000, // Cache duration of 1 minute
+ *   refreshThresholdMs: 5000, // Refresh threshold of 5 seconds
+ *   checkIntervalMs: 15000, // Check interval of 15 seconds
+ * });
  */
-class DependencyMonitor {
-  private dependencies: DependencyCheck[] = [];
-  private cache: CacheManagerCache;
-  private dependencyCheckInterval: NodeJS.Timeout | null = null;
-  private checkTimeoutMs: number = DEFAULT_CHECK_TIMEOUT_MS;
-  private refreshThresholdMs: number = DEFAULT_REFRESH_THRESHOLD_MS;
-  private cacheDurationMs: number = DEFAULT_CACHE_DURATION_MS;
-  private checkIntervalMs: number = DEPENDENCY_CHECK_INTERVAL_MS;
+class DependencyMonitor implements DependencyMonitorInterface {
+  private _dependencies: DependencyCheckOptions[] = [];
+  private _cache: CacheManagerCache;
+  private _dependencyCheckInterval: NodeJS.Timeout | null = null;
+  private _refreshThresholdMs: number = DEFAULT_REFRESH_THRESHOLD_MS;
+  private _cacheDurationMs: number = DEFAULT_CACHE_DURATION_MS;
+  private _checkIntervalMs: number = DEFAULT_CHECK_INTERVAL_MS;
 
-  /**
-   * Creates an instance of DependencyMonitor.
-   * @param {DependencyMonitorOptions} [options] - Configuration options for the monitor.
-   */
+  public checkIntervalStarted: boolean = false;
+
   constructor(options: DependencyMonitorOptions = {}) {
-    this.checkTimeoutMs = options.checkTimeoutMs || DEFAULT_CHECK_TIMEOUT_MS;
-    this.cacheDurationMs = options.cacheDurationMs || DEFAULT_CACHE_DURATION_MS;
-    this.refreshThresholdMs =
+    this._cacheDurationMs =
+      options.cacheDurationMs || DEFAULT_CACHE_DURATION_MS;
+    this._refreshThresholdMs =
       options.refreshThresholdMs || DEFAULT_REFRESH_THRESHOLD_MS;
-    this.checkIntervalMs =
-      options.checkIntervalMs || DEPENDENCY_CHECK_INTERVAL_MS;
+    this._checkIntervalMs =
+      options.checkIntervalMs || DEFAULT_CHECK_INTERVAL_MS;
 
-    this.cache = createCache({});
-
-    this.startDependencyCheckInterval();
+    this._cache = createCache({
+      ttl: this._cacheDurationMs,
+      refreshThreshold: this._refreshThresholdMs,
+    });
   }
 
-  /**
-   * Starts the interval to periodically check the status of all dependencies.
-   * @private
-   */
-  private startDependencyCheckInterval(): void {
-    /* istanbul ignore next */
-    if (this.dependencyCheckInterval) {
-      clearInterval(this.dependencyCheckInterval);
+  public startDependencyCheckInterval(): void {
+    this.checkIntervalStarted = true;
+    if (this._dependencyCheckInterval) {
+      clearInterval(this._dependencyCheckInterval);
     }
-    this.dependencyCheckInterval = setInterval(
-      this.getAllDependenciesStatus.bind(this),
-      this.checkIntervalMs,
+    this._getAllDependenciesStatus(); // Initial check
+    this._dependencyCheckInterval = setInterval(
+      this._getAllDependenciesStatus.bind(this),
+      this._checkIntervalMs,
     );
-    this.dependencyCheckInterval.unref(); // Allow the process to exit if this is the only thing running
+    this._dependencyCheckInterval.unref(); // Allow the process to exit if this is the only thing running
   }
 
-  /**
-   * Registers a new dependency to be monitored.
-   * @param {DependencyCheck} dependency - The dependency to register.
-   */
-  public register(dependency: DependencyCheck): void {
-    this.dependencies.push(dependency);
+  public stopDependencyCheckInterval(): void {
+    this.checkIntervalStarted = false;
+    if (this._dependencyCheckInterval) {
+      clearInterval(this._dependencyCheckInterval);
+      this._dependencyCheckInterval = null;
+    }
   }
 
-  /**
-   * Gets the status of a single dependency, using the cache if available.
-   * @private
-   * @param {DependencyCheck} dependency - The dependency to check.
-   * @returns {Promise<DependencyStatus>} The status of the dependency.
-   */
-  private async getDependencyStatus(
-    dependency: DependencyCheck,
+  public register(dependency: DependencyCheckOptions): void {
+    this._dependencies.push(dependency);
+  }
+
+  private async _getDependencyStatus(
+    dependency: DependencyCheckOptions,
   ): Promise<DependencyStatus> {
     try {
-      return await this.cache.wrap(
+      return await this._cache.wrap(
         dependency.name,
         async () => {
           const start = Date.now();
           const checkResults = await dependency.check();
           const latencyMs = Date.now() - start;
-          return formatCheckResult(dependency.name, checkResults, latencyMs);
+          return formatCheckResult(dependency, checkResults, latencyMs);
         },
-        {
-          ttl: dependency.cacheDurationMs,
-          refreshThreshold: this.refreshThresholdMs,
-        },
+        dependency.cacheDurationMs || this._cacheDurationMs,
+        dependency.refreshThresholdMs || this._refreshThresholdMs,
       );
     } catch (error) {
-      const status = formatCheckResult(dependency.name, {
+      const status = formatCheckResult(dependency, {
         code: ERROR_STATUS_CODE,
         error: error as Error,
         errorMessage: `Error checking dependency ${dependency.name}`,
       });
-      await this.cache.set(dependency.name, status, dependency.cacheDurationMs);
+      await this._cache.set(
+        dependency.name,
+        status,
+        dependency.cacheDurationMs,
+      );
       return status;
     }
   }
 
-  /**
-   * Gets the status of all registered dependencies concurrently.
-   * @private
-   * @returns {Promise<DependencyStatus[]>} An array of dependency statuses.
-   */
-  private async getAllDependenciesStatus(): Promise<DependencyStatus[]> {
-    const checkPromises = this.dependencies.map(async (dep) =>
-      this.getDependencyStatus(dep),
+  private async _getAllDependenciesStatus(): Promise<DependencyStatus[]> {
+    const checkPromises = this._dependencies.map(async (dep) =>
+      this._getDependencyStatus(dep),
     );
 
     // Run all checks concurrently
     return await Promise.all(checkPromises);
   }
 
-  /**
-   * Gets the status of a specific dependency by name.
-   * @param {string} dependencyName - The name of the dependency.
-   * @returns {Promise<DependencyStatus>} The status of the dependency.
-   * @throws {Error} If the dependency is not found.
-   */
   public async getStatus(dependencyName: string): Promise<DependencyStatus> {
     const cacheKey = dependencyName;
-    const cachedValue = await this.cache.get(cacheKey);
+    const cachedValue = await this._cache.get(cacheKey);
     if (cachedValue) {
       return cachedValue as DependencyStatus;
     } else {
-      const dependency = this.dependencies.find(
+      const dependency = this._dependencies.find(
         (dep) => dep.name === dependencyName,
       );
       if (dependency) {
-        return await this.getDependencyStatus(dependency);
+        return await this._getDependencyStatus(dependency);
       }
       throw new Error(`Dependency ${dependencyName} not found`);
     }
   }
 
-  /**
-   * Gets the status of all registered dependencies.
-   * @returns {Promise<DependencyStatus[]>} An array of dependency statuses.
-   */
   public async getAllStatuses(): Promise<DependencyStatus[]> {
-    return await this.getAllDependenciesStatus();
+    return await this._getAllDependenciesStatus();
   }
 
-  /**
-   * Retrieves Prometheus-formatted metrics for all dependencies.
-   *
-   * This method fetches the status of all dependencies and generates
-   * Prometheus metrics strings for each dependency, including:
-   * - `dependency_latency_ms`: The latency of the dependency in milliseconds.
-   * - `dependency_health`: A binary value indicating the health of the dependency (1 for healthy, 0 for unhealthy).
-   *
-   * @returns A promise that resolves to a string containing Prometheus metrics
-   *          for all dependencies, formatted as required by Prometheus.
-   */
   public async getPrometheusMetrics(): Promise<string> {
-    const statuses = await this.getAllDependenciesStatus();
+    const statuses = await this._getAllDependenciesStatus();
     return formatPrometheusMetrics(statuses);
   }
 }

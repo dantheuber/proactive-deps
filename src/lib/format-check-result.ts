@@ -6,37 +6,61 @@ import {
   ERROR_STATUS_MESSAGE,
   WARNING_STATUS_MESSAGE,
 } from '../constants';
-import { DependencyCheckResult, DependencyStatus } from '../types';
+import {
+  DependencyCheckOptions,
+  DependencyCheckResult,
+  DependencyStatus,
+} from '../types';
+
+type ErrorObject = {
+  name: string;
+  message: string;
+  stack?: string;
+};
+const objectifyError = (error: Error | undefined): ErrorObject | undefined =>
+  error
+    ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      }
+    : undefined;
 
 export default function formatCheckResult(
-  dependencyName: string,
+  dependency: DependencyCheckOptions,
   result: DependencyCheckResult,
   latencyMs: number = 0,
 ): DependencyStatus {
+  const resultCode = typeof result === 'number' ? result : result.code;
+  const resultError = typeof result === 'number' ? undefined : result.error;
+  const resultErrorMessage =
+    typeof result === 'number' ? undefined : result.errorMessage;
   const status: DependencyStatus & { error?: Error; errorMessage?: string } = {
-    name: dependencyName,
+    name: dependency.name,
+    lastChecked: new Date().toISOString(),
+    description: dependency.description,
+    impact: dependency.impact,
     healthy: false,
     code: ERROR_STATUS_CODE,
-    message: ERROR_STATUS_MESSAGE,
+    status: ERROR_STATUS_MESSAGE,
     latencyMs: latencyMs,
   };
 
-  if (result.code === SUCCESS_STATUS_CODE) {
-    status.healthy = true;
-    status.code = SUCCESS_STATUS_CODE;
-    status.message = SUCCESS_STATUS_MESSAGE;
-  } else if (result.code === WARNING_STATUS_CODE) {
-    status.healthy = true;
-    status.code = WARNING_STATUS_CODE;
-    status.message = WARNING_STATUS_MESSAGE;
-  }
-
-  if (result.error) {
-    status.error = result.error;
-  }
-
-  if (result.errorMessage) {
-    status.errorMessage = result.errorMessage;
+  switch (resultCode) {
+    case SUCCESS_STATUS_CODE:
+      status.healthy = true;
+      status.code = SUCCESS_STATUS_CODE;
+      status.status = SUCCESS_STATUS_MESSAGE;
+      break;
+    case WARNING_STATUS_CODE:
+      status.healthy = true;
+      status.code = WARNING_STATUS_CODE;
+      status.status = WARNING_STATUS_MESSAGE;
+      break;
+    case ERROR_STATUS_CODE:
+      status.error = objectifyError(resultError);
+      status.errorMessage = resultErrorMessage;
+      break;
   }
 
   return status as DependencyStatus;
