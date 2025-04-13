@@ -127,7 +127,7 @@ console.log(statuses);
 // ];
 ```
 
-### Getting the Status of a Specific Dependenecy
+### Getting the Status of a Specific Dependency
 
 ```js
 const status = await monitor.getStatus('redis');
