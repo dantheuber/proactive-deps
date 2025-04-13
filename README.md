@@ -24,6 +24,12 @@ npm install proactive-deps
 
 ## ⚙️ Usage
 
+#### Starting and Stopping the Dependency Check Interval
+
+Once you have registered your dependencies, you must call `monitor.startDependencyCheckInterval()` to start the automated interval that periodically checks the status of all registered dependencies. This ensures that the health of your dependencies is monitored continuously at the configured interval.
+
+If you need to stop the automated checks (e.g., during application shutdown or maintenance), you can call `monitor.stopDependencyCheckInterval()` to stop the interval.
+
 ### Registering a Dependency
 
 ```js
@@ -55,6 +61,8 @@ monitor.register({
   cacheDurationMs: 10000, // Cache results for 10 seconds
   refreshThresholdMs: 5000, // Refresh results if older than 5 seconds
 });
+
+monitor.startDependencyMonitoring();
 ```
 
 ### What Should a Dependency Check Return?
