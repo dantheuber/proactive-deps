@@ -61,8 +61,6 @@ export default function formatCheckResult(
       status.error = objectifyError(resultError);
       status.errorMessage = resultErrorMessage;
       break;
-    default:
-      break;
   }
 
   return status as DependencyStatus;
