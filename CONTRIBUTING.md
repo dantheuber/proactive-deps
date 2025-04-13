@@ -31,21 +31,28 @@ git checkout -b feature-or-bugfix-name
 npm test
 ```
 
-6. **Commit Your Changes**  
+6. **Format Your Code**  
+   Ensure your code is properly formatted by running:
+
+```bash
+npm run format
+```
+
+7. **Commit Your Changes**  
    Write clear and concise commit messages:
 
 ```bash
 git commit -m "Description of your changes"
 ```
 
-7. **Push Your Changes**  
+8. **Push Your Changes**  
    Push your branch to your fork:
 
 ```bash
 git push origin feature-or-bugfix-name
 ```
 
-8. **Submit a Pull Request**  
+9. **Submit a Pull Request**  
    Open a pull request to the main repository. Provide a detailed description of your changes.
 
 ## Code of Conduct
