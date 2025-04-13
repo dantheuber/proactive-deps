@@ -62,7 +62,7 @@ monitor.register({
   refreshThresholdMs: 5000, // Refresh results if older than 5 seconds
 });
 
-monitor.startDependencyMonitoring();
+monitor.startDependencyCheckInterval();
 ```
 
 ### What Should a Dependency Check Return?

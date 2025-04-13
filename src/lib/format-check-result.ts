@@ -60,6 +60,7 @@ export default function formatCheckResult(
     case ERROR_STATUS_CODE:
       status.error = objectifyError(resultError);
       status.errorMessage = resultErrorMessage;
+      break;
     default:
       break;
   }
