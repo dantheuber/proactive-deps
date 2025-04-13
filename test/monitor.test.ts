@@ -48,7 +48,7 @@ describe('DependencyMonitor', () => {
 
     monitor.register(dependency);
     expect((monitor as any)._dependencies).toContain(dependency);
-  })
+  });
 
   it('should get the status of a healthy dependency', async () => {
     const dependency = {

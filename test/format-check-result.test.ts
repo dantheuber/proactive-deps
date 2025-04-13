@@ -34,11 +34,7 @@ describe('formatCheckResult', () => {
     });
   });
   it('should return a healthy status for when returning only SUCCESS_STATUS_CODE', () => {
-    const result = formatCheckResult(
-      dependency,
-      SUCCESS_STATUS_CODE,
-      50,
-    );
+    const result = formatCheckResult(dependency, SUCCESS_STATUS_CODE, 50);
     expect(result).toEqual({
       name: 'redis',
       description: 'Redis cache layer',
@@ -89,7 +85,11 @@ describe('formatCheckResult', () => {
   });
 
   it('should handle missing errorMessage in error status', () => {
-    const result = formatCheckResult(dependency, { code: ERROR_STATUS_CODE }, 200);
+    const result = formatCheckResult(
+      dependency,
+      { code: ERROR_STATUS_CODE },
+      200,
+    );
     expect(result).toEqual({
       name: 'redis',
       description: 'Redis cache layer',

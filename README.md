@@ -74,7 +74,7 @@ A registered dependency check can return either a status code or an object with 
 You can return just the status code:
 
 ```js
-SUCCESS_STATUS_CODE
+SUCCESS_STATUS_CODE;
 ```
 
 Or an object with the status code:
