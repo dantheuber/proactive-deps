@@ -18,7 +18,7 @@
       [
         "babel-plugin-preserve-comment-header",
         {
-          "pattern": "@property"
+          "pattern": "@example"
         }
       ]
     ]

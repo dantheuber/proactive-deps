@@ -8,10 +8,10 @@ export default function formatPrometheusMetrics(
   );
   const healthMetrics = dependencies.map(
     (dep) =>
-      `dependency_health{dependency="${dep.name}"} ${dep.healthy ? 1 : 0}`,
+      `dependency_health{dependency="${dep.name}"} ${dep.healthy ? 0 : 1}`,
   );
   const metrics = [
-    '# HELP dependency_health Dependency status (1: healthy, 0: unhealthy)',
+    '# HELP dependency_health Dependency status (0: healthy, 1: unhealthy)',
     '# TYPE dependency_health gauge',
     ...healthMetrics,
     '# HELP dependency_latency_ms Dependency latency in milliseconds',
