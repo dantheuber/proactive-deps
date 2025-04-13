@@ -14,18 +14,41 @@ describe('DependencyMonitor', () => {
     jest.useRealTimers(); // Restore real timers
   });
 
+  it('should allow starting and stopping of monitor interval', () => {
+    expect((monitor as any)._dependencyCheckInterval).toBe(null);
+    monitor.startDependencyCheckInterval();
+    expect((monitor as any)._dependencyCheckInterval).not.toBe(null);
+    monitor.startDependencyCheckInterval(); // branch for re-starting already running interval
+    expect((monitor as any)._dependencyCheckInterval).not.toBe(null);
+    monitor.stopDependencyCheckInterval();
+    expect((monitor as any)._dependencyCheckInterval).toBe(null);
+  });
+
   it('should register a dependency', () => {
     const dependency = {
       name: 'redis',
       description: 'Redis cache',
       impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
-      cacheDurationMs: 10000,
     };
 
     monitor.register(dependency);
     expect((monitor as any)._dependencies).toContain(dependency);
   });
+
+  it('should register a dependency with optional override properties', () => {
+    const dependency = {
+      name: 'redis',
+      description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
+      check: async () => ({ code: SUCCESS_STATUS_CODE }),
+      cacheDurationMs: 10000,
+      refreshDurationMs: 5000,
+    };
+
+    monitor.register(dependency);
+    expect((monitor as any)._dependencies).toContain(dependency);
+  })
 
   it('should get the status of a healthy dependency', async () => {
     const dependency = {
@@ -33,7 +56,6 @@ describe('DependencyMonitor', () => {
       description: 'Redis cache',
       impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
-      cacheDurationMs: 10000,
     };
 
     monitor.register(dependency);
@@ -50,7 +72,6 @@ describe('DependencyMonitor', () => {
         code: ERROR_STATUS_CODE,
         errorMessage: 'Connection failed',
       }),
-      cacheDurationMs: 10000,
     };
 
     monitor.register(dependency);
@@ -67,7 +88,6 @@ describe('DependencyMonitor', () => {
       check: async () => {
         throw new Error('Check Exception');
       },
-      cacheDurationMs: 10000,
     };
 
     monitor.register(dependency);
@@ -85,7 +105,6 @@ describe('DependencyMonitor', () => {
       description: 'Redis cache',
       impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
-      cacheDurationMs: 10000,
     };
 
     const dependency2 = {
@@ -96,7 +115,6 @@ describe('DependencyMonitor', () => {
         code: ERROR_STATUS_CODE,
         errorMessage: 'Connection failed',
       }),
-      cacheDurationMs: 10000,
     };
 
     monitor.register(dependency1);
@@ -114,7 +132,6 @@ describe('DependencyMonitor', () => {
       description: 'Redis cache',
       impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
-      cacheDurationMs: 10000,
     };
 
     monitor.register(dependency);
@@ -130,7 +147,6 @@ describe('DependencyMonitor', () => {
       description: 'Redis cache',
       impact: 'Responses may be slower due to missing cache.',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
-      cacheDurationMs: 10000,
     };
 
     monitor.register(dependency);
