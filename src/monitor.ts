@@ -4,6 +4,7 @@ import {
   DEFAULT_CACHE_DURATION_MS,
   DEFAULT_REFRESH_THRESHOLD_MS,
   ERROR_STATUS_CODE,
+  SUCCESS_STATUS_CODE,
 } from './constants';
 import {
   DependencyMonitorInterface,
@@ -89,6 +90,9 @@ class DependencyMonitor implements DependencyMonitorInterface {
       return await this._cache.wrap(
         dependency.name,
         async () => {
+          if (dependency.skip) {
+            return formatCheckResult(dependency, SUCCESS_STATUS_CODE, 0, true);
+          }
           const start = Date.now();
           const checkResults = await dependency.check();
           const latencyMs = Date.now() - start;

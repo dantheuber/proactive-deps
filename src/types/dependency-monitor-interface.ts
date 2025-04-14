@@ -10,13 +10,18 @@
  * @method getAllStatuses - Retrieves the statuses of all registered dependencies.
  * @method getStatus - Retrieves the status of a specific dependency by name.
  * @method getPrometheusMetrics - Retrieves the Prometheus metrics for all dependencies.
+ * @example
+ * const monitor = new DependencyMonitor({
+ *   checkInterval: 60000, // Check every 60 seconds
+ *   cacheDuration: 300000, // Cache results for 5 minutes
+ *   refreshThreshold: 60000, // Refresh if older than 60 seconds
+ * });
  */
 import { DependencyCheckOptions } from './dependency-check-options';
 import { DependencyStatus } from './dependency-status';
 export interface DependencyMonitorInterface {
   /**
    * A flag indicating whether the check interval has started.
-   * @type {boolean}
    * @example
    * const monitor = new DependencyMonitor();
    * console.log(monitor.checkIntervalStarted); // false
@@ -81,12 +86,12 @@ export interface DependencyMonitorInterface {
    * const prometheusMetrics = await monitor.getPrometheusMetrics();
    * console.log(prometheusMetrics);
    * // Output:
-   * // # HELP database_status The status of the database connection (0 = Healthy, 1 = Unhealthy)
-   * // # TYPE database_status gauge
-   * // database_status{dependency="Database"} 0
-   * // # HELP database_latency The latency of the database connection check
-   * // # TYPE database_latency gauge
-   * // database_latency{dependency="Database"} 50
+   * // # HELP dependency_health The status of the database connection (0 = Healthy, 1 = Unhealthy)
+   * // # TYPE dependency_health gauge
+   * // dependency_health{dependency="Database", impact="Database info will not be available."} 0
+   * // # HELP dependency_latency The latency of the database connection check
+   * // # TYPE dependency_latency gauge
+   * // dependency_latency{dependency="Database"} 50
    */
   getPrometheusMetrics(): Promise<string>;
 }

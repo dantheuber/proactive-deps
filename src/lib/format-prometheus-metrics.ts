@@ -4,11 +4,12 @@ export default function formatPrometheusMetrics(
   dependencies: DependencyStatus[],
 ): string {
   const latencyMetrics = dependencies.map(
-    (dep) => `dependency_latency_ms{dependency="${dep.name}"} ${dep.latencyMs}`,
+    (dep) =>
+      `dependency_latency_ms{dependency="${dep.name}"} ${dep.health.latency}`,
   );
   const healthMetrics = dependencies.map(
     (dep) =>
-      `dependency_health{dependency="${dep.name}"} ${dep.healthy ? 0 : 1}`,
+      `dependency_health{dependency="${dep.name}", impact="${dep.impact}"} ${dep.healthy ? 0 : 1}`,
   );
   const metrics = [
     '# HELP dependency_health Dependency status (0: healthy, 1: unhealthy)',

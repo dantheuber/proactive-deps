@@ -30,6 +30,7 @@ export default function formatCheckResult(
   dependency: DependencyCheckOptions,
   result: DependencyCheckResult,
   latencyMs: number = 0,
+  skipped: boolean = false,
 ): DependencyStatus {
   const resultCode = typeof result === 'number' ? result : result.code;
   const resultError = typeof result === 'number' ? undefined : result.error;
@@ -40,23 +41,35 @@ export default function formatCheckResult(
     lastChecked: new Date().toISOString(),
     description: dependency.description,
     impact: dependency.impact,
+    contact: dependency.contact,
     healthy: false,
-    code: ERROR_STATUS_CODE,
-    status: ERROR_STATUS_MESSAGE,
-    latencyMs: latencyMs,
+    health: {
+      state: ERROR_STATUS_MESSAGE,
+      code: ERROR_STATUS_CODE,
+      latency: latencyMs,
+      skipped: false,
+    },
     checkDetails: dependency.checkDetails,
   };
+
+  if (skipped) {
+    status.health.skipped = true;
+    status.healthy = true;
+    status.health.code = SUCCESS_STATUS_CODE;
+    status.health.state = SUCCESS_STATUS_MESSAGE;
+    return status as DependencyStatus;
+  }
 
   switch (resultCode) {
     case SUCCESS_STATUS_CODE:
       status.healthy = true;
-      status.code = SUCCESS_STATUS_CODE;
-      status.status = SUCCESS_STATUS_MESSAGE;
+      status.health.code = SUCCESS_STATUS_CODE;
+      status.health.state = SUCCESS_STATUS_MESSAGE;
       break;
     case WARNING_STATUS_CODE:
       status.healthy = true;
-      status.code = WARNING_STATUS_CODE;
-      status.status = WARNING_STATUS_MESSAGE;
+      status.health.code = WARNING_STATUS_CODE;
+      status.health.state = WARNING_STATUS_MESSAGE;
       break;
     case ERROR_STATUS_CODE:
       status.error = objectifyError(resultError);
