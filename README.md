@@ -71,6 +71,50 @@ monitor.register({
 monitor.startDependencyCheckInterval();
 ```
 
+### Using the `skip` Boolean
+
+The `skip` boolean allows you to mark a dependency as skipped, meaning its health check will not be executed. Skipped dependencies are considered healthy by default, with a latency of `0` and the `skipped` flag set to `true`.
+
+#### Why Would You Want to Skip a Dependency?
+
+There are several scenarios where skipping a dependency might be useful:
+
+- **Temporarily Disabled Services**: If a service is temporarily offline or not in use, you can skip its health check to avoid unnecessary errors or alerts.
+- **Development or Testing**: During development or testing, you might want to skip certain dependencies that are not yet implemented or are mocked.
+
+#### Example with a Skipped Dependency
+
+```js
+monitor.register({
+  name: 'external-service',
+  description: 'An external service that is temporarily disabled',
+  impact: 'No impact since this service is currently unused.',
+  check: async () => {
+    // This check will not run because the dependency is skipped
+    return { code: SUCCESS_STATUS_CODE };
+  },
+  skip: true, // Mark this dependency as skipped
+});
+```
+
+When a dependency is skipped, its status will look like this:
+
+```js
+{
+  name: 'external-service',
+  description: 'An external service that is temporarily disabled',
+  impact: 'No impact since this service is currently unused.',
+  healthy: true,
+  health: {
+    state: 'OK',
+    code: 0,
+    latency: 0,
+    skipped: true,
+  },
+  lastChecked: '2025-04-13T12:00:00Z',
+}
+```
+
 ### Why Use `checkDetails`?
 
 The `checkDetails` property allows you to provide additional metadata about the dependency being monitored. This can be useful for:
@@ -167,9 +211,12 @@ console.log(statuses);
 //     description: 'Redis cache layer',
 //     impact: 'Responses may be slower due to missing cache.',
 //     healthy: true,
-//     code: 0,
-//     status: 'OK',
-//     latencyMs: 5,
+//     health: {
+//       state: 'OK',
+//       code: 0,
+//       latency: 5,
+//       skipped: false,
+//     },
 //     lastChecked: '2025-04-13T12:00:00Z',
 //   },
 // ];
@@ -186,9 +233,12 @@ console.log(status);
 //   description: 'Redis cache layer',
 //   impact: 'Responses may be slower due to missing cache.',
 //   healthy: true,
-//   code: 0,
-//   status: 'OK',
-//   latencyMs: 5,
+//   health: {
+//     state: 'OK',
+//     code: 0,
+//     latency: 5,
+//     skipped: false,
+//   },
 //   lastChecked: '2025-04-13T12:00:00Z',
 // }
 ```
@@ -205,7 +255,7 @@ dependency_latency_ms{dependency="redis"} 5
 
 # HELP dependency_health Whether the dependency is currently healthy (0 = healthy, 1 = unhealthy)
 # TYPE dependency_health gauge
-dependency_health{dependency="redis"} 0
+dependency_health{dependency="redis", impact="Responses may be slower due to missing cache."} 0
 */
 ```
 
