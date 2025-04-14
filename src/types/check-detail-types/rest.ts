@@ -8,7 +8,7 @@
  * @property {string} [body] - Optional body being sent in the request. Be careful not to expose any sensitive information here. These are just examples.
  * @property {number} [timeoutMs] - Optional in milliseconds for the request.
  * @property {number} [expectedStatusCode] - Optional expected HTTP status code for a successful response.
- * @property {string} [expectedResponseBody] - Optional description of value in response body being checked for. Can be a string or a regular expression.
+ * @property {string} [expectedResponseBody] - Optional description of value in response body being checked for.
  * @example
  * const restCheckDetails: RestCheckDetails = {
  *   type: 'rest',

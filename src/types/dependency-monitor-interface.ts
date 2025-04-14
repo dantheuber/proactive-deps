@@ -11,6 +11,8 @@ export interface DependencyMonitorInterface {
    * @example
    * const monitor = new DependencyMonitor();
    * console.log(monitor.checkIntervalStarted); // false
+   * monitor.startDependencyCheckInterval();
+   * console.log(monitor.checkIntervalStarted); // true
    */
   checkIntervalStarted: boolean;
   /**
