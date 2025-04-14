@@ -38,7 +38,7 @@ jobs:
       # Check if the tag already exists
       - name: Check if tag exists
         id: check_tag
-        run: echo "TAG_EXISTS=$(git rev-parse 'v${{env.VERSION}} >/dev/null 2>&1 && echo true || echo false)" >> $GITHUB_ENV
+        run: echo "TAG_EXISTS=$(git rev-parse 'v${{env.VERSION}}' >/dev/null 2>&1 && echo true || echo false)" >> $GITHUB_ENV
 
       # Create a release if the tag does not exist
       - name: Create GitHub Release
