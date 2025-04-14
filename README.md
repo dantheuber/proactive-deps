@@ -211,9 +211,7 @@ dependency_health{dependency="redis"} 0
 
 ## 📖 API Documentation
 
-For detailed API documentation, refer to the [API.md](./API.md) file.
-
-The `API.md` file contains comprehensive information about all exported classes, methods, and types in the library, generated using JSDoc.
+For detailed API documentation, refer to the [docs](https://dantheuber.github.io/proactive-deps).
 
 ## 🧠 Philosophy
 

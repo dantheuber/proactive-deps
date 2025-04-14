@@ -57,8 +57,8 @@ export type DependencyStatus = {
     [key: string]: string;
   };
   health: {
-    state: 'OK' | 'CRITICAL' | 'WARNING';
-    code: 0 | 1 | 2;
+    state: string;
+    code: number
     latency: number;
     skipped: boolean;
   };
