@@ -46,7 +46,11 @@ describe('formatPrometheusMetrics', () => {
     const metrics = formatPrometheusMetrics(dependencies);
     expect(metrics).toContain('dependency_latency_ms{dependency="redis"} 50');
     expect(metrics).toContain('dependency_latency_ms{dependency="db"} 100');
-    expect(metrics).toContain('dependency_health{dependency="redis", impact="Responses may be slower due to missing cache."} 0');
-    expect(metrics).toContain('dependency_health{dependency="db", impact="Database queries will fail."} 1');
+    expect(metrics).toContain(
+      'dependency_health{dependency="redis", impact="Responses may be slower due to missing cache."} 0',
+    );
+    expect(metrics).toContain(
+      'dependency_health{dependency="db", impact="Database queries will fail."} 1',
+    );
   });
 });

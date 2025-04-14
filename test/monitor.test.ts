@@ -210,7 +210,9 @@ describe('DependencyMonitor', () => {
 
     const metrics = await monitor.getPrometheusMetrics();
     expect(metrics).toContain('dependency_latency_ms{dependency="redis"}');
-    expect(metrics).toContain('dependency_health{dependency="redis", impact="Responses may be slower due to missing cache."} 0');
+    expect(metrics).toContain(
+      'dependency_health{dependency="redis", impact="Responses may be slower due to missing cache."} 0',
+    );
   });
 
   it('should handle cache miss and fetch dependency status', async () => {

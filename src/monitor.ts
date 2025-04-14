@@ -22,7 +22,6 @@ import formatPrometheusMetrics from './lib/format-prometheus-metrics';
  * to refresh the cache at specified intervals.
  * It also provides a method to get Prometheus metrics for the monitored dependencies.
  * @class DependencyMonitor
- * @implements {DependencyMonitorInterface}
  * @param {DependencyMonitorOptions} [options] - Optional configuration options for the monitor.
  * @param {number} [options.cacheDurationMs] - Duration (in milliseconds) to cache the dependency check result.
  * @param {number} [options.refreshThresholdMs] - Duration (in milliseconds) to refresh the dependency check result.
