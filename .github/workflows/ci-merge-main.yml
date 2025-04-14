@@ -43,6 +43,7 @@ jobs:
             echo "TAG_EXISTS=true" >> $GITHUB_ENV
           else
             echo "TAG_EXISTS=false" >> $GITHUB_ENV
+          fi
 
       # Create a release if the tag does not exist
       - name: Create GitHub Release
