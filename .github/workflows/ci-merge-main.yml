@@ -24,18 +24,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # Build the documentation
-      - name: Build documentation
-        run: npm run build:docs
-
-      # Commit and push updated docs
-      - name: Commit and push updated docs
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add docs/
-          git commit -m "Update documentation [ci skip]" || echo "No changes to commit"
-          git push origin main
+      # Run tests
+      - name: Run tests
+        run: npm test
 
       # Extract version from package.json
       - name: Get version from package.json
