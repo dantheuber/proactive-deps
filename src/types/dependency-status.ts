@@ -27,8 +27,20 @@
  * //   status: 'OK',
  * //   latencyMs: 50,
  * //   lastChecked: '2023-10-01T12:00:00Z',
+ * //   checkDetails: {
+ * //     type: 'database',
+ * //     server: 'localhost',
+ * //     database: 'mydb',
+ * //     dbType: 'mysql',
+ * //   },
  * // }
  */
+import {
+  DatabaseCheckDetails,
+  GenericCheckDetails,
+  RestCheckDetails,
+  SoapCheckDetails,
+} from "./check-detail-types";
 export type DependencyStatus = {
   name: string;
   description: string;
@@ -38,6 +50,7 @@ export type DependencyStatus = {
   status: string;
   latencyMs: number;
   lastChecked: string;
+  checkDetails?: GenericCheckDetails|DatabaseCheckDetails|RestCheckDetails|SoapCheckDetails;
   error?: {
     name: string;
     message: string;

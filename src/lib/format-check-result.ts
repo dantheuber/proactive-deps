@@ -44,6 +44,7 @@ export default function formatCheckResult(
     code: ERROR_STATUS_CODE,
     status: ERROR_STATUS_MESSAGE,
     latencyMs: latencyMs,
+    checkDetails: dependency.checkDetails,
   };
 
   switch (resultCode) {
