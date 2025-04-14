@@ -145,7 +145,7 @@ const genericCheckDetails: GenericCheckDetails = {
 | type                   | <code>string</code>                        | <p>The type of check, which is 'rest' for REST checks.</p>                                                                        |
 | url                    | <code>string</code>                        | <p>The URL being called.</p>                                                                                                      |
 | method                 | <code>string</code>                        | <p>The HTTP method (e.g., GET, POST).</p>                                                                                         |
-| [headers]              | <code>Record.&lt;string, string&gt;</code> | <p>Optional headers being included in the request. Do not expose real authentication tokens here These are just examples.</p>     |
+| [headers]              | <code>Record.&lt;string, string&gt;</code> | <p>Optional headers being included in the request. Do not expose real authentication tokens here. These are just examples.</p>    |
 | [body]                 | <code>string</code>                        | <p>Optional body being sent in the request. Be careful not to expose any sensitive information here. These are just examples.</p> |
 | [timeoutMs]            | <code>number</code>                        | <p>Optional in milliseconds for the request.</p>                                                                                  |
 | [expectedStatusCode]   | <code>number</code>                        | <p>Optional expected HTTP status code for a successful response.</p>                                                              |
