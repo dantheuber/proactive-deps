@@ -1,5 +1,6 @@
 import { DependencyMonitor } from '../src/monitor';
 import { SUCCESS_STATUS_CODE, ERROR_STATUS_CODE } from '../src/constants';
+import { DatabaseCheckDetails } from '../src/types';
 
 describe('DependencyMonitor', () => {
   let monitor: DependencyMonitor;
@@ -48,6 +49,27 @@ describe('DependencyMonitor', () => {
 
     monitor.register(dependency);
     expect((monitor as any)._dependencies).toContain(dependency);
+  });
+
+  it('status should provide the check details provided when registering the dependency', async () => {
+    const checkDetails: DatabaseCheckDetails = {
+      type: 'database',
+      server: 'localhost',
+      database: 'mydb',
+      dbType: 'mysql',
+    };
+
+    const dependency = {
+      name: 'redis',
+      description: 'Redis cache',
+      impact: 'Responses may be slower due to missing cache.',
+      check: async () => ({ code: SUCCESS_STATUS_CODE }),
+      checkDetails,
+    };
+
+    monitor.register(dependency);
+    const status = await monitor.getStatus('redis');
+    expect(status.checkDetails).toEqual(checkDetails);
   });
 
   it('should get the status of a healthy dependency', async () => {

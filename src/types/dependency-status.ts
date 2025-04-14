@@ -9,6 +9,8 @@
  * @property {string} status - Status message (e.g., SUCCESS_STATUS_MESSAGE, ERROR_STATUS_MESSAGE, WARNING_STATUS_MESSAGE).
  * @property {number} latencyMs - The latency of the dependency check in milliseconds.
  * @property {string} lastChecked - The ISO timestamp of the last check.
+ * @property {GenericCheckDetails|DatabaseCheckDetails|RestCheckDetails|SoapCheckDetails} [checkDetails] - Optional details about the check.
+ * @property {string} [checkDetails.type] - The type of check (e.g., 'database', 'rest', 'soap', 'generic').
  * @property {Object} [error] - If the check fails, this contains the error object.
  * @property {string} [error.name] - The name of the error.
  * @property {string} [error.message] - The error message.
@@ -27,8 +29,20 @@
  * //   status: 'OK',
  * //   latencyMs: 50,
  * //   lastChecked: '2023-10-01T12:00:00Z',
+ * //   checkDetails: {
+ * //     type: 'database',
+ * //     server: 'localhost',
+ * //     database: 'mydb',
+ * //     dbType: 'mysql',
+ * //   },
  * // }
  */
+import {
+  DatabaseCheckDetails,
+  GenericCheckDetails,
+  RestCheckDetails,
+  SoapCheckDetails,
+} from './check-detail-types';
 export type DependencyStatus = {
   name: string;
   description: string;
@@ -38,6 +52,11 @@ export type DependencyStatus = {
   status: string;
   latencyMs: number;
   lastChecked: string;
+  checkDetails?:
+    | GenericCheckDetails
+    | DatabaseCheckDetails
+    | RestCheckDetails
+    | SoapCheckDetails;
   error?: {
     name: string;
     message: string;
