@@ -1,24 +1,10 @@
-/**
- * DependencyMonitorInterface is an interface that defines the structure of a dependency monitor object.
- * It includes methods for starting and stopping the monitoring process, checking the status of dependencies,
- * and registering new dependencies.
- * @interface DependencyMonitorInterface
- * @property {boolean} checkIntervalStarted - A flag indicating whether the check interval has started.
- * @method startDependencyCheckInterval - Starts the interval for checking dependencies.
- * @method stopDependencyCheckInterval - Stops the interval for checking dependencies.
- * @method register - Registers a new dependency to be monitored.
- * @method getAllStatuses - Retrieves the statuses of all registered dependencies.
- * @method getStatus - Retrieves the status of a specific dependency by name.
- * @method getPrometheusMetrics - Retrieves the Prometheus metrics for all dependencies.
- * @example
- * const monitor = new DependencyMonitor({
- *   checkInterval: 60000, // Check every 60 seconds
- *   cacheDuration: 300000, // Cache results for 5 minutes
- *   refreshThreshold: 60000, // Refresh if older than 60 seconds
- * });
- */
 import { DependencyCheckOptions } from './dependency-check-options';
 import { DependencyStatus } from './dependency-status';
+/**
+ * Defines is an interface that defines the structure of the dependency monitor class.
+ * It includes properties and methods for managing the monitoring of dependencies.
+ * @interface DependencyMonitorInterface
+ */
 export interface DependencyMonitorInterface {
   /**
    * A flag indicating whether the check interval has started.
