@@ -60,9 +60,57 @@ monitor.register({
   },
   cacheDurationMs: 10000, // Cache results for 10 seconds
   refreshThresholdMs: 5000, // Refresh results if older than 5 seconds
+  checkDetails: {
+    type: 'database',
+    server: 'localhost',
+    database: 'cache',
+    dbType: 'redis',
+  }, // Optional details about the dependency
 });
 
 monitor.startDependencyCheckInterval();
+```
+
+### Why Use `checkDetails`?
+
+The `checkDetails` property allows you to provide additional metadata about the dependency being monitored. This can be useful for:
+
+- **Debugging**: Including details like the server, database name, or API endpoint can help quickly identify the source of an issue.
+- **Monitoring Dashboards**: Exposing `checkDetails` in status summaries or metrics can provide more context for operations teams.
+- **Custom Alerts**: Use `checkDetails` to include specific information in alerts, such as the type of dependency or its criticality.
+
+#### Example with REST API Dependency
+
+```js
+monitor.register({
+  name: 'user-service',
+  description: 'User management REST API',
+  impact: 'User-related operations may fail.',
+  check: async () => {
+    try {
+      const response = await fetch('https://api.example.com/users/health');
+      if (response.ok) {
+        return SUCCESS_STATUS_CODE;
+      } else {
+        return {
+          code: ERROR_STATUS_CODE,
+          errorMessage: `Unexpected status: ${response.status}`,
+        };
+      }
+    } catch (error) {
+      return {
+        code: ERROR_STATUS_CODE,
+        error,
+        errorMessage: 'Failed to reach user-service API',
+      };
+    }
+  },
+  checkDetails: {
+    type: 'rest',
+    url: 'https://api.example.com/users/health',
+    method: 'GET',
+  }, // Optional details about the dependency
+});
 ```
 
 ### What Should a Dependency Check Return?
