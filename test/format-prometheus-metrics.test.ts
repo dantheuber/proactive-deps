@@ -14,10 +14,12 @@ describe('formatPrometheusMetrics', () => {
         description: 'Redis cache layer',
         impact: 'Responses may be slower due to missing cache.',
         healthy: true,
-        latencyMs: 50,
-        code: SUCCESS_STATUS_CODE,
-        message: SUCCESS_STATUS_MESSAGE,
-        status: SUCCESS_STATUS_MESSAGE,
+        health: {
+          state: SUCCESS_STATUS_MESSAGE,
+          code: SUCCESS_STATUS_CODE,
+          latency: 50,
+          skipped: false,
+        },
         lastChecked: new Date().toISOString(),
       },
       {
@@ -25,18 +27,30 @@ describe('formatPrometheusMetrics', () => {
         description: 'Database',
         impact: 'Database queries will fail.',
         healthy: false,
-        latencyMs: 100,
-        code: ERROR_STATUS_CODE,
-        message: ERROR_STATUS_MESSAGE,
-        status: ERROR_STATUS_MESSAGE,
+        health: {
+          state: ERROR_STATUS_MESSAGE,
+          code: ERROR_STATUS_CODE,
+          latency: 100,
+          skipped: false,
+        },
         lastChecked: new Date().toISOString(),
+        errorMessage: 'Connection failed',
+        error: {
+          name: 'ConnectionError',
+          message: 'Failed to connect to the database',
+          stack: 'Error stack trace here',
+        },
       },
     ];
 
     const metrics = formatPrometheusMetrics(dependencies);
     expect(metrics).toContain('dependency_latency_ms{dependency="redis"} 50');
     expect(metrics).toContain('dependency_latency_ms{dependency="db"} 100');
-    expect(metrics).toContain('dependency_health{dependency="redis"} 0');
-    expect(metrics).toContain('dependency_health{dependency="db"} 1');
+    expect(metrics).toContain(
+      'dependency_health{dependency="redis", impact="Responses may be slower due to missing cache."} 0',
+    );
+    expect(metrics).toContain(
+      'dependency_health{dependency="db", impact="Database queries will fail."} 1',
+    );
   });
 });

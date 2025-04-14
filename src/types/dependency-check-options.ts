@@ -4,6 +4,8 @@
  * @property {string} name - The name of the dependency.
  * @property {string} description - A description of the dependency.
  * @property {string} impact - The impact of the dependency on the system, should it go down.
+ * @property {boolean} [skip] - Optional flag to skip the check. Useful for skipping checks in some environments.
+ * @property {Object} [contact] - Optional contact information for the dependency. Can contain any number of custom properties.
  * @property {DependencyCheckFunction} check - A function that performs the dependency check and returns a result.
  * @property {GenericCheckDetails|DatabaseCheckDetails|RestCheckDetails|SoapCheckDetails} [checkDetails] - Optional details about the check.
  * @property {string} [checkDetails.type] - The type of check (e.g., 'database', 'rest', 'soap', 'generic').
@@ -16,6 +18,11 @@
  *   name: 'Some Database',
  *   description: 'Database connection check',
  *   impact: 'Database data will be unavailable.',
+ *   skip: process.env.NODE_ENV === 'dev', // skip in dev environment
+ *   contact: {
+ *     team: 'Dev Team',
+ *     slack: '#dev-team-channel',
+ *   },
  *   cacheDurationMs: 30000, // override cache duration to 30 seconds
  *   refreshThresholdMs: 10000, // override refresh threshold to 10 seconds
  *   check: async () => {
@@ -41,6 +48,10 @@ export type DependencyCheckOptions = {
   name: string;
   description: string;
   impact: string;
+  skip?: boolean;
+  contact?: {
+    [key: string]: string;
+  };
   check: () => Promise<DependencyCheckResult>;
   checkDetails?:
     | GenericCheckDetails

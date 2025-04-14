@@ -1,6 +1,6 @@
 {
   "name": "proactive-deps",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "A library for managing proactive dependency checks in Node.js applications.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -36,7 +36,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "build:docs": "jsdoc2md --files ./src/**/*.ts --configure ./jsdoc2md.json > API.md && npm run format",
+    "build:docs": "typedoc --out docs src/index.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -53,12 +53,9 @@
     "@types/node": "^20.0.0",
     "babel-plugin-preserve-comment-header": "^1.0.1",
     "jest": "^29.7.0",
-    "jsdoc": "^4.0.2",
-    "jsdoc-babel": "^0.5.0",
-    "jsdoc-plugin-typescript": "^3.2.0",
-    "jsdoc-to-markdown": "^7.1.1",
     "prettier": "^3.5.3",
     "ts-jest": "^29.3.1",
+    "typedoc": "^0.28.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {

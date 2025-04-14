@@ -4,10 +4,13 @@
  * @property {string} name - The name of the dependency.
  * @property {string} description - Description of the dependency.
  * @property {string} impact - Impact of the dependency on the system.
+ * @property {Object} [contact] - Optional Contact information for the dependency. Can contain any number of custom properties.
+ * @property {Object} health - Health status of the dependency.
+ * @property {string} health.state - Health state (e.g., 'OK', 'CRITICAL', 'WARNING').
+ * @property {number} health.code - Health code (0: OK, 1: CRITICAL, 2: WARNING).
+ * @property {number} health.latency - Latency of the dependency check in milliseconds.
+ * @property {boolean} health.skipped - Indicates if the check was skipped.
  * @property {boolean} healthy - Indicates whether the dependency is healthy.
- * @property {number} code - Status code (e.g., SUCCESS_STATUS_CODE (0), ERROR_STATUS_CODE (1), WARNING_STATUS_CODE (2)).
- * @property {string} status - Status message (e.g., SUCCESS_STATUS_MESSAGE, ERROR_STATUS_MESSAGE, WARNING_STATUS_MESSAGE).
- * @property {number} latencyMs - The latency of the dependency check in milliseconds.
  * @property {string} lastChecked - The ISO timestamp of the last check.
  * @property {GenericCheckDetails|DatabaseCheckDetails|RestCheckDetails|SoapCheckDetails} [checkDetails] - Optional details about the check.
  * @property {string} [checkDetails.type] - The type of check (e.g., 'database', 'rest', 'soap', 'generic').
@@ -24,10 +27,13 @@
  * //   name: 'Some Database',
  * //   description: 'Database connection check',
  * //   impact: 'Database data will be unavailable.',
+ * //   health: {
+ * //     state: 'OK',
+ * //     code: 0,
+ * //     latency: 50,
+ * //     skipped: false,
+ * //   },
  * //   healthy: true,
- * //   code: 0,
- * //   status: 'OK',
- * //   latencyMs: 50,
  * //   lastChecked: '2023-10-01T12:00:00Z',
  * //   checkDetails: {
  * //     type: 'database',
@@ -47,10 +53,16 @@ export type DependencyStatus = {
   name: string;
   description: string;
   impact: string;
+  contact?: {
+    [key: string]: string;
+  };
+  health: {
+    state: string;
+    code: number;
+    latency: number;
+    skipped: boolean;
+  };
   healthy: boolean;
-  code: number;
-  status: string;
-  latencyMs: number;
   lastChecked: string;
   checkDetails?:
     | GenericCheckDetails
