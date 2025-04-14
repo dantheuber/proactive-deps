@@ -22,16 +22,6 @@ import formatPrometheusMetrics from './lib/format-prometheus-metrics';
  * to refresh the cache at specified intervals.
  * It also provides a method to get Prometheus metrics for the monitored dependencies.
  * @class DependencyMonitor
- * @param {DependencyMonitorOptions} [options] - Optional configuration options for the monitor.
- * @param {number} [options.cacheDurationMs] - Duration (in milliseconds) to cache the dependency check result.
- * @param {number} [options.refreshThresholdMs] - Duration (in milliseconds) to refresh the dependency check result.
- * @param {number} [options.checkIntervalMs] - Interval (in milliseconds) for running dependency checks.
- * @example
- * const monitor = new DependencyMonitor({
- *   cacheDurationMs: 60000, // Cache duration of 1 minute
- *   refreshThresholdMs: 5000, // Refresh threshold of 5 seconds
- *   checkIntervalMs: 15000, // Check interval of 15 seconds
- * });
  */
 class DependencyMonitor implements DependencyMonitorInterface {
   private _dependencies: DependencyCheckOptions[] = [];
@@ -43,6 +33,17 @@ class DependencyMonitor implements DependencyMonitorInterface {
 
   public checkIntervalStarted: boolean = false;
 
+  /**
+   * Creates an instance of DependencyMonitor.
+   * @param {DependencyMonitorOptions} [options] - Optional configuration options for the monitor.
+   * @default { cacheDurationMs: 60000, refreshThresholdMs: 5000, checkIntervalMs: 15000 }
+   * @example
+   * const monitor = new DependencyMonitor({
+   *   cacheDurationMs: 60000, // Cache duration of 1 minute
+   *   refreshThresholdMs: 5000, // Refresh threshold of 5 seconds
+   *   checkIntervalMs: 15000, // Check interval of 15 seconds
+   * });
+   */
   constructor(options: DependencyMonitorOptions = {}) {
     this._cacheDurationMs =
       options.cacheDurationMs || DEFAULT_CACHE_DURATION_MS;
