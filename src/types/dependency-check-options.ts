@@ -33,7 +33,7 @@ import { DependencyCheckResult } from './dependency-check-result';
  *     dbType: 'mysql',
  *   }
  * };
- * 
+ *
  * monitor.register(myDependency);
  */
 export interface DependencyCheckOptions {
@@ -147,4 +147,4 @@ export interface DependencyCheckOptions {
    * };
    */
   refreshThresholdMs?: number;
-};
+}
