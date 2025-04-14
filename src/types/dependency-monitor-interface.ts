@@ -35,7 +35,7 @@ export interface DependencyMonitorInterface {
    */
   startDependencyCheckInterval(): void;
   /**
-   * Starts the interval for checking dependencies.
+   * Stops the interval for checking dependencies.
    * @example
    * monitor.startDependencyCheckInterval();
    */
