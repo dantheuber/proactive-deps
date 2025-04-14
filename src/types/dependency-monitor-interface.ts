@@ -1,7 +1,7 @@
 import { DependencyCheckOptions } from './dependency-check-options';
 import { DependencyStatus } from './dependency-status';
 /**
- * Defines is an interface that defines the structure of the dependency monitor class.
+ * An interface defining the structure of the dependency monitor class.
  * It includes properties and methods for managing the monitoring of dependencies.
  * @interface DependencyMonitorInterface
  */
