@@ -36,7 +36,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "build:docs": "jsdoc2md --files ./src/**/*.ts --configure ./jsdoc2md.json > API.md",
+    "build:docs": "jsdoc2md --files ./src/**/*.ts --configure ./jsdoc2md.json > API.md && npm run format",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

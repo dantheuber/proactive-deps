@@ -6,6 +6,7 @@
  * @property {string} impact - The impact of the dependency on the system, should it go down.
  * @property {DependencyCheckFunction} check - A function that performs the dependency check and returns a result.
  * @property {GenericCheckDetails|DatabaseCheckDetails|RestCheckDetails|SoapCheckDetails} [checkDetails] - Optional details about the check.
+ * @property {string} [checkDetails.type] - The type of check (e.g., 'database', 'rest', 'soap', 'generic').
  * @property {number} [cacheDurationMs] - Optional override duration (in milliseconds) to cache the dependency check result.
  * @property {number} [refreshThresholdMs] - Optional override duration (in milliseconds) to refresh the dependency check result.
  * @example
@@ -34,14 +35,18 @@ import {
   GenericCheckDetails,
   DatabaseCheckDetails,
   RestCheckDetails,
-  SoapCheckDetails
+  SoapCheckDetails,
 } from './check-detail-types';
 export type DependencyCheckOptions = {
   name: string;
   description: string;
   impact: string;
   check: () => Promise<DependencyCheckResult>;
-  checkDetails?: GenericCheckDetails | DatabaseCheckDetails | RestCheckDetails | SoapCheckDetails;
+  checkDetails?:
+    | GenericCheckDetails
+    | DatabaseCheckDetails
+    | RestCheckDetails
+    | SoapCheckDetails;
   cacheDurationMs?: number;
   refreshThresholdMs?: number;
 };

@@ -10,7 +10,20 @@
  * @property {string} [proc] - Optional stored procedure being executed to check the database connection.
  * @property {number} [timeoutMs] - Optional timeout in milliseconds for the database query.
  * @property {number} [expectedRowCount] - Optional The expected number of rows returned from the query.
- * @property {string|RegExp} [expectedResponse] - Optional value in response being checked for. Can be a string or a regular expression.
+ * @property {string} [expectedResponse] - Optional description of value in response being checked for.
+ * @example
+ * const databaseCheckDetails: DatabaseCheckDetails = {
+ *   type: 'database',
+ *   server: 'localhost',
+ *   database: 'mydb',
+ *   dbType: 'mysql',
+ *   connectionString: 'mysql://user:password@localhost/mydb', // do not expose real authentication tokens here
+ *   proc: 'GetUserById',
+ *   query: 'SELECT * FROM users WHERE id = 1',
+ *   timeoutMs: 5000,
+ *   expectedRowCount: 1,
+ *   expectedResponse: 'John Doe',
+ * };
  */
 export type DatabaseCheckDetails = {
   type: 'database';
@@ -23,4 +36,4 @@ export type DatabaseCheckDetails = {
   timeoutMs?: number;
   expectedRowCount?: number;
   expectedResponse?: string | RegExp;
-}
+};
