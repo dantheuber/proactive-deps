@@ -24,11 +24,11 @@ jobs:
       - name: Build documentation
         run: npm run build:docs
 
-      - name: Commit and push changes to docs branch
+      - name: Commit and push changes
         run: |
+          sed -i 's|^docs/|# docs/|' .gitignore
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -B docs
           git add .
           git commit -m "Update docs"
-          git push origin docs --force
+          git push origin main:docs
