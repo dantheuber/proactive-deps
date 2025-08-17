@@ -220,7 +220,7 @@ class DependencyMonitor implements DependencyMonitorInterface {
     const valueMap: Record<string, number> = { OK: 0, WARNING: 1, CRITICAL: 2 };
     const value = valueMap[health.state];
     this._latencyGauge!.set({ dependency: name }, health.latency);
-    this._healthGauge!.set({ dependency: name, impact: impact || '' }, value);
+    this._healthGauge!.set({ dependency: name, impact: impact }, value);
   }
 }
 

@@ -376,16 +376,4 @@ describe('DependencyMonitor', () => {
     const metrics = await monitor.getPrometheusMetrics();
     expect(metrics).toContain('# HELP process_cpu_seconds_total'); // default metric
   });
-  it('emits metrics with blank impact when impact not provided', async () => {
-    const monitor = new DependencyMonitor({});
-    monitor.register({
-      name: 'noimpact',
-      description: 'No impact dep',
-      check: async () => ({ code: SUCCESS_STATUS_CODE }),
-    } as Omit<Parameters<typeof monitor.register>[0], 'impact'>);
-    const metrics = await monitor.getPrometheusMetrics();
-    expect(metrics).toMatch(
-      /dependency_health\{dependency="noimpact",impact=""} 0/,
-    );
-  });
 });
