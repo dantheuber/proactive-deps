@@ -384,7 +384,7 @@ describe('DependencyMonitor', () => {
       name: 'noimpact',
       description: 'No impact dep',
       check: async () => ({ code: SUCCESS_STATUS_CODE }),
-    } as any);
+    } as Omit<Parameters<typeof monitor.register>[0], 'impact'>);
     const metrics = await monitor.getPrometheusMetrics();
     expect(metrics).toMatch(
       /dependency_health\{dependency="noimpact",impact=""} 0/,
