@@ -165,7 +165,7 @@ class DependencyMonitor implements DependencyMonitorInterface {
   public async getPrometheusMetrics(): Promise<string> {
     await this._getAllDependenciesStatus(); // ensure gauges updated before render
     this._initPromClient();
-  return this._registry!.metrics();
+    return this._registry!.metrics();
   }
 
   /**
@@ -190,7 +190,9 @@ class DependencyMonitor implements DependencyMonitorInterface {
     const latencyName = 'dependency_latency_ms';
     const healthName = 'dependency_health';
 
-    const existingLatency = this._registry.getSingleMetric(latencyName) as Gauge<'dependency'> | undefined;
+    const existingLatency = this._registry.getSingleMetric(latencyName) as
+      | Gauge<'dependency'>
+      | undefined;
     this._latencyGauge =
       existingLatency ||
       new promClient.Gauge<'dependency'>({
@@ -200,7 +202,9 @@ class DependencyMonitor implements DependencyMonitorInterface {
         registers: [this._registry],
       });
 
-    const existingHealth = this._registry.getSingleMetric(healthName) as Gauge<'dependency' | 'impact'> | undefined;
+    const existingHealth = this._registry.getSingleMetric(healthName) as
+      | Gauge<'dependency' | 'impact'>
+      | undefined;
     this._healthGauge =
       existingHealth ||
       new promClient.Gauge<'dependency' | 'impact'>({
