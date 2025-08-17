@@ -52,10 +52,10 @@ describe('DependencyMonitor integration with mock server', () => {
     expect(status.healthy).toBe(true);
     expect(status.health.code).toBe(SUCCESS_STATUS_CODE);
 
-  // Metrics should reflect OK (health gauge = 0)
-  const metrics = await monitor.getPrometheusMetrics();
-  expect(metrics).toMatch(/dependency_latency_ms{dependency="mock-api"} \d+/);
-  expect(metrics).toMatch(/dependency_health{dependency="mock-api",impact="Feature X degraded"} 0(\.\d+)?/);
+    // Metrics should reflect OK (health gauge = 0)
+    const metrics = await monitor.getPrometheusMetrics();
+    expect(metrics).toMatch(/dependency_latency_ms{dependency="mock-api"} \d+/);
+    expect(metrics).toMatch(/dependency_health{dependency="mock-api",impact="Feature X degraded"} 0(\.\d+)?/);
   });
 
   test('reports CRITICAL when server set to error', async () => {
@@ -66,8 +66,8 @@ describe('DependencyMonitor integration with mock server', () => {
     expect(status.healthy).toBe(false);
     expect(status.health.code).toBe(ERROR_STATUS_CODE);
 
-  // Metrics should now reflect CRITICAL (health gauge = 2)
-  const metrics = await monitor.getPrometheusMetrics();
-  expect(metrics).toMatch(/dependency_health{dependency="mock-api",impact="Feature X degraded"} 2(\.\d+)?/);
+    // Metrics should now reflect CRITICAL (health gauge = 2)
+    const metrics = await monitor.getPrometheusMetrics();
+    expect(metrics).toMatch(/dependency_health{dependency="mock-api",impact="Feature X degraded"} 2(\.\d+)?/);
   });
 });
