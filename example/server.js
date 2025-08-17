@@ -34,11 +34,7 @@ try {
   proactive = require('../src');
 }
 
-const {
-  DependencyMonitor,
-  SUCCESS_STATUS_CODE,
-  ERROR_STATUS_CODE,
-} = proactive;
+const { DependencyMonitor, SUCCESS_STATUS_CODE, ERROR_STATUS_CODE } = proactive;
 
 const monitor = new DependencyMonitor({
   // Collect default metrics (optional)
@@ -93,9 +89,13 @@ function sendJson(res, statusCode, body) {
 
 async function handlePokemonRequest(res, name) {
   try {
-    const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(name)}`);
+    const response = await fetch(
+      `https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(name)}`,
+    );
     if (!response.ok) {
-      sendJson(res, response.status, { error: `PokeAPI returned status ${response.status}` });
+      sendJson(res, response.status, {
+        error: `PokeAPI returned status ${response.status}`,
+      });
       return;
     }
     const data = await response.json();
@@ -106,12 +106,15 @@ async function handlePokemonRequest(res, name) {
       height: data.height,
       weight: data.weight,
       base_experience: data.base_experience,
-      types: data.types.map(t => t.type.name),
-      abilities: data.abilities.map(a => a.ability.name),
+      types: data.types.map((t) => t.type.name),
+      abilities: data.abilities.map((a) => a.ability.name),
     };
     sendJson(res, 200, subset);
   } catch (error) {
-    sendJson(res, 502, { error: 'Failed to fetch from PokeAPI', details: error.message });
+    sendJson(res, 502, {
+      error: 'Failed to fetch from PokeAPI',
+      details: error.message,
+    });
   }
 }
 
@@ -144,7 +147,10 @@ const server = http.createServer(async (req, res) => {
       const statuses = await monitor.getAllStatuses();
       sendJson(res, 200, statuses);
     } catch (error) {
-      sendJson(res, 500, { error: 'Unable to fetch dependency statuses', details: error.message });
+      sendJson(res, 500, {
+        error: 'Unable to fetch dependency statuses',
+        details: error.message,
+      });
     }
     return;
   }
@@ -155,7 +161,10 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/plain' });
       res.end(metrics);
     } catch (error) {
-      sendJson(res, 500, { error: 'Unable to render Prometheus metrics', details: error.message });
+      sendJson(res, 500, {
+        error: 'Unable to render Prometheus metrics',
+        details: error.message,
+      });
     }
     return;
   }

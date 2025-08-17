@@ -68,12 +68,12 @@ class DependencyMonitor implements DependencyMonitorInterface {
       refreshThreshold: this._refreshThresholdMs,
     });
 
-  // store prometheus options and eagerly ensure prom-client presence
-  this._promClient = options.promClient || promClient;
-  this._registry = options.registry; // may be undefined; created during _initPromClient
-  this._collectDefaultMetrics = !!options.collectDefaultMetrics;
-  // Eagerly initialize metrics so they are always available
-  this._initPromClient();
+    // store prometheus options and eagerly ensure prom-client presence
+    this._promClient = options.promClient || promClient;
+    this._registry = options.registry; // may be undefined; created during _initPromClient
+    this._collectDefaultMetrics = !!options.collectDefaultMetrics;
+    // Eagerly initialize metrics so they are always available
+    this._initPromClient();
   }
 
   public startDependencyCheckInterval(): void {
@@ -114,13 +114,9 @@ class DependencyMonitor implements DependencyMonitorInterface {
           const start = Date.now();
           const checkResults = await dependency.check();
           const latencyMs = Date.now() - start;
-          const status = formatCheckResult(
-            dependency,
-            checkResults,
-            latencyMs,
-          );
+          const status = formatCheckResult(dependency, checkResults, latencyMs);
           this._updateMetrics(status);
-            return status;
+          return status;
         },
         dependency.cacheDurationMs || this._cacheDurationMs,
         dependency.refreshThresholdMs || this._refreshThresholdMs,

@@ -6,12 +6,12 @@ Define async checks (DBs, REST APIs, queues, etc.), get structured status + late
 
 ## Features
 
-* Simple registration of dependency checks
-* Per‑dependency TTL + refresh threshold (cache-manager under the hood)
-* Latency + health gauges for Prometheus
-* Optional collection of Node default metrics
-* Skippable checks (e.g. for local dev / disabled services)
-* TypeScript first (ships types)
+- Simple registration of dependency checks
+- Per‑dependency TTL + refresh threshold (cache-manager under the hood)
+- Latency + health gauges for Prometheus
+- Optional collection of Node default metrics
+- Skippable checks (e.g. for local dev / disabled services)
+- TypeScript first (ships types)
 
 ## Install
 
@@ -22,7 +22,11 @@ npm install proactive-deps
 ## Quick Start
 
 ```js
-import { DependencyMonitor, SUCCESS_STATUS_CODE, ERROR_STATUS_CODE } from 'proactive-deps';
+import {
+  DependencyMonitor,
+  SUCCESS_STATUS_CODE,
+  ERROR_STATUS_CODE,
+} from 'proactive-deps';
 
 const monitor = new DependencyMonitor({
   // Optional: turn on prom-client default metrics & tweak intervals
@@ -49,8 +53,8 @@ monitor.register({
       }; // Unhealthy status with error details
     }
   },
-  cacheDurationMs: 10000,      // (optional) override default cache TTL
-  refreshThresholdMs: 5000,    // (optional) pre-emptive refresh window
+  cacheDurationMs: 10000, // (optional) override default cache TTL
+  refreshThresholdMs: 5000, // (optional) pre-emptive refresh window
   checkDetails: {
     type: 'database',
     server: 'localhost',
@@ -114,8 +118,9 @@ monitor.register({
 ### Return Shape
 
 Checker returns either:
-* `SUCCESS_STATUS_CODE` (number) or
-* `{ code, error?, errorMessage? }`
+
+- `SUCCESS_STATUS_CODE` (number) or
+- `{ code, error?, errorMessage? }`
 
 `skip: true` short‑circuits to an OK result with `latency: 0` and `skipped: true`.
 
@@ -167,8 +172,8 @@ console.log(status);
 
 The monitor lazily initializes `prom-client` gauges (or uses the provided registry):
 
-* `dependency_latency_ms{dependency}` – last check latency (ms)
-* `dependency_health{dependency,impact}` – health state (0 OK, 1 WARNING, 2 CRITICAL)
+- `dependency_latency_ms{dependency}` – last check latency (ms)
+- `dependency_health{dependency,impact}` – health state (0 OK, 1 WARNING, 2 CRITICAL)
 
 Enable default Node metrics by passing `collectDefaultMetrics: true` to the constructor.
 
@@ -187,12 +192,15 @@ dependency_health{dependency="redis",impact="Responses may be slower (cache miss
 ```
 
 ### Example Server (PokeAPI Demo)
+
 See `example/server.js` for a pure Node HTTP server exposing:
-* `/pokemon/:name` – live pass‑through to PokeAPI
-* `/dependencies` – JSON array of current statuses
-* `/metrics` – Prometheus text output
+
+- `/pokemon/:name` – live pass‑through to PokeAPI
+- `/dependencies` – JSON array of current statuses
+- `/metrics` – Prometheus text output
 
 Run it locally:
+
 ```bash
 npm run build
 node example/server.js
@@ -203,10 +211,11 @@ node example/server.js
 For detailed API documentation, refer to the [docs](https://dantheuber.github.io/proactive-deps).
 
 ## Roadmap (abridged)
-* Built-in helper for common /metrics endpoint
-* Optional retry / backoff helpers
-* Alert hooks (Slack, email)
-* Pluggable cache stores
+
+- Built-in helper for common /metrics endpoint
+- Optional retry / backoff helpers
+- Alert hooks (Slack, email)
+- Pluggable cache stores
 
 ## License
 

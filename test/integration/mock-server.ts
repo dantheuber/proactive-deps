@@ -50,7 +50,7 @@ export function createMockServer(requestedPort: number = 0): MockServerHandle {
       return respondJSON(res, 500, { status: 'error' });
     }
     if (method === 'GET' && path === '/health/slow') {
-      await new Promise(r => setTimeout(r, 150));
+      await new Promise((r) => setTimeout(r, 150));
       return respondJSON(res, 200, { status: 'ok', delayed: true });
     }
     if (method === 'GET' && path.startsWith('/data/')) {
@@ -70,7 +70,8 @@ export function createMockServer(requestedPort: number = 0): MockServerHandle {
       if (mode === 'error') return respondJSON(res, 500, { status: 'error' });
       // flaky mode — alternate
       const now = Date.now();
-      if (now % 2 === 0) return respondJSON(res, 200, { status: 'ok', flaky: true });
+      if (now % 2 === 0)
+        return respondJSON(res, 200, { status: 'ok', flaky: true });
       return respondJSON(res, 500, { status: 'error', flaky: true });
     }
 
@@ -86,7 +87,7 @@ export function createMockServer(requestedPort: number = 0): MockServerHandle {
     async start() {
       if (server) return currentPort;
       server = http.createServer(handler);
-      await new Promise<void>(resolve => {
+      await new Promise<void>((resolve) => {
         server!.listen(currentPort, () => {
           // if ephemeral port (0), capture the assigned port
           const address = server!.address();
@@ -101,7 +102,7 @@ export function createMockServer(requestedPort: number = 0): MockServerHandle {
     async stop() {
       if (!server) return;
       await new Promise<void>((resolve, reject) => {
-        server!.close(err => (err ? reject(err) : resolve()));
+        server!.close((err) => (err ? reject(err) : resolve()));
       });
       server = null;
     },

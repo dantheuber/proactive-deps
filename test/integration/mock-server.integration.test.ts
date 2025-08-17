@@ -1,4 +1,8 @@
-import { DependencyMonitor, SUCCESS_STATUS_CODE, ERROR_STATUS_CODE } from '../../src';
+import {
+  DependencyMonitor,
+  SUCCESS_STATUS_CODE,
+  ERROR_STATUS_CODE,
+} from '../../src';
 import { createMockServer } from './mock-server';
 
 /**
@@ -31,9 +35,16 @@ describe('DependencyMonitor integration with mock server', () => {
         try {
           const res = await fetch(`http://localhost:${port}/dynamic`);
           if (res.ok) return SUCCESS_STATUS_CODE;
-          return { code: ERROR_STATUS_CODE, errorMessage: `status ${res.status}` };
+          return {
+            code: ERROR_STATUS_CODE,
+            errorMessage: `status ${res.status}`,
+          };
         } catch (error) {
-          return { code: ERROR_STATUS_CODE, error: error as Error, errorMessage: 'fetch failed' };
+          return {
+            code: ERROR_STATUS_CODE,
+            error: error as Error,
+            errorMessage: 'fetch failed',
+          };
         }
       },
     });
@@ -47,7 +58,7 @@ describe('DependencyMonitor integration with mock server', () => {
 
   test('reports OK state initially', async () => {
     // Ensure at least one interval pass
-    await new Promise(r => setTimeout(r, 350));
+    await new Promise((r) => setTimeout(r, 350));
     const status = await monitor.getStatus('mock-api');
     expect(status.healthy).toBe(true);
     expect(status.health.code).toBe(SUCCESS_STATUS_CODE);
@@ -55,19 +66,23 @@ describe('DependencyMonitor integration with mock server', () => {
     // Metrics should reflect OK (health gauge = 0)
     const metrics = await monitor.getPrometheusMetrics();
     expect(metrics).toMatch(/dependency_latency_ms{dependency="mock-api"} \d+/);
-    expect(metrics).toMatch(/dependency_health{dependency="mock-api",impact="Feature X degraded"} 0(\.\d+)?/);
+    expect(metrics).toMatch(
+      /dependency_health{dependency="mock-api",impact="Feature X degraded"} 0(\.\d+)?/,
+    );
   });
 
   test('reports CRITICAL when server set to error', async () => {
     mock.setMode('error');
     // wait for interval + cache refresh
-    await new Promise(r => setTimeout(r, 400));
+    await new Promise((r) => setTimeout(r, 400));
     const status = await monitor.getStatus('mock-api');
     expect(status.healthy).toBe(false);
     expect(status.health.code).toBe(ERROR_STATUS_CODE);
 
     // Metrics should now reflect CRITICAL (health gauge = 2)
     const metrics = await monitor.getPrometheusMetrics();
-    expect(metrics).toMatch(/dependency_health{dependency="mock-api",impact="Feature X degraded"} 2(\.\d+)?/);
+    expect(metrics).toMatch(
+      /dependency_health{dependency="mock-api",impact="Feature X degraded"} 2(\.\d+)?/,
+    );
   });
 });
