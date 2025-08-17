@@ -32,4 +32,21 @@ export type DependencyMonitorOptions = {
    * @default 15000
    */
   checkIntervalMs?: number;
+  /**
+   * Optional prom-client module instance to use for metrics. If not provided the library will attempt
+   * to lazy-load prom-client. If prom-client cannot be resolved, metrics collection becomes a no-op
+   * and `getPrometheusMetrics` will return an empty string.
+   * @example
+   * import * as promClient from 'prom-client';
+   * const monitor = new DependencyMonitor({ promClient });
+   */
+  promClient?: any; // typed as any to avoid hard dependency on prom-client types at compile for consumers not using it
+  /**
+   * Optional existing Registry instance to register metrics with. If omitted a new Registry is created.
+   */
+  registry?: any;
+  /**
+   * When true and a new Registry is created internally, default process metrics will also be collected.
+   */
+  collectDefaultMetrics?: boolean;
 };

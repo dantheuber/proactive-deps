@@ -1,5 +1,6 @@
+import promClient from 'prom-client';
 import { DependencyMonitor } from '../src/monitor';
-import { SUCCESS_STATUS_CODE, ERROR_STATUS_CODE } from '../src/constants';
+import { SUCCESS_STATUS_CODE, ERROR_STATUS_CODE, WARNING_STATUS_CODE } from '../src/constants';
 import { DatabaseCheckDetails } from '../src/types';
 
 describe('DependencyMonitor', () => {
@@ -211,7 +212,7 @@ describe('DependencyMonitor', () => {
     const metrics = await monitor.getPrometheusMetrics();
     expect(metrics).toContain('dependency_latency_ms{dependency="redis"}');
     expect(metrics).toContain(
-      'dependency_health{dependency="redis", impact="Responses may be slower due to missing cache."} 0',
+      'dependency_health{dependency="redis",impact="Responses may be slower due to missing cache."} 0',
     );
   });
 
@@ -290,4 +291,69 @@ describe('DependencyMonitor', () => {
       lastChecked: expect.any(String),
     });
   });
+  it('registers and updates gauges using injected registry', async () => {
+      const registry = new promClient.Registry();
+      const monitor = new DependencyMonitor({ promClient, registry });
+  
+      monitor.register({
+        name: 'redis',
+        description: 'Redis cache',
+        impact: 'Cache latency may increase',
+        check: async () => ({ code: SUCCESS_STATUS_CODE }),
+      });
+      monitor.register({
+        name: 'api',
+        description: 'External API',
+        impact: 'Some features degraded',
+        check: async () => ({ code: WARNING_STATUS_CODE }),
+      });
+      monitor.register({
+        name: 'skipped',
+        description: 'Skipped dep',
+        impact: 'None',
+        skip: true,
+        check: async () => ({ code: SUCCESS_STATUS_CODE }),
+      });
+  
+      await monitor.getAllStatuses(); // trigger checks & metrics
+      const metrics = await monitor.getPrometheusMetrics();
+  
+      expect(metrics).toContain('dependency_latency_ms{dependency="redis"}');
+      expect(metrics).toContain('dependency_latency_ms{dependency="api"}');
+      // skipped dependency does not execute check so latency metric not emitted
+      expect(metrics).toMatch(/dependency_health\{dependency="redis",impact="Cache latency may increase"} 0/);
+      expect(metrics).toMatch(/dependency_health\{dependency="api",impact="Some features degraded"} 1/);
+    });
+    describe('prom-client integration', () => {
+      it('falls back to legacy formatting when prom-client init fails', async () => {
+        const badPromClient: any = {}; // missing Registry -> will cause _initPromClient to throw
+        const monitor = new DependencyMonitor({ promClient: badPromClient });
+        monitor.register({
+          name: 'legacy',
+          description: 'Legacy dependency',
+          impact: 'None',
+          check: async () => ({ code: SUCCESS_STATUS_CODE }),
+        });
+        const metrics = await monitor.getPrometheusMetrics();
+        expect(metrics).toContain('# HELP dependency_health'); // legacy formatter marker
+      });
+    
+      it('handles repeated metrics calls (init short-circuit)', async () => {
+        const registry = new promClient.Registry();
+        const monitor = new DependencyMonitor({
+          promClient,
+          registry,
+        });
+        monitor.register({
+          name: 'svc',
+          description: 'Service',
+          impact: 'Degraded responses',
+          check: async () => ({ code: SUCCESS_STATUS_CODE }),
+        });
+        const first = await monitor.getPrometheusMetrics();
+        const second = await monitor.getPrometheusMetrics(); // triggers early return branch
+        expect(first).toContain('dependency_latency_ms{dependency="svc"}');
+        expect(second).toContain('dependency_health{dependency="svc",impact="Degraded responses"} 0');
+      });
+    })
 });

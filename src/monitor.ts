@@ -1,4 +1,5 @@
 import { createCache, Cache as CacheManagerCache } from 'cache-manager';
+import promClient from 'prom-client';
 import {
   DEFAULT_CHECK_INTERVAL_MS,
   DEFAULT_CACHE_DURATION_MS,
@@ -15,6 +16,10 @@ import {
 import formatCheckResult from './lib/format-check-result';
 import formatPrometheusMetrics from './lib/format-prometheus-metrics';
 
+// Prometheus support is optional; we lazy-require prom-client only if metrics are requested
+// Using loose any typing to avoid forcing downstream consumers to install @types/prom-client
+type PromClientModule = any;
+
 /**
  * DependencyMonitor is a class that monitors the status of various dependencies
  * (e.g., databases, APIs) and provides methods to check their health and latency.
@@ -30,6 +35,13 @@ class DependencyMonitor implements DependencyMonitorInterface {
   private _refreshThresholdMs: number = DEFAULT_REFRESH_THRESHOLD_MS;
   private _cacheDurationMs: number = DEFAULT_CACHE_DURATION_MS;
   private _checkIntervalMs: number = DEFAULT_CHECK_INTERVAL_MS;
+  // prom-client related (all optional / lazy)
+  private _promClient?: PromClientModule;
+  private _registry?: any; // use any to avoid requiring prom-client types for consumers
+  private _latencyGauge?: any;
+  private _healthGauge?: any;
+  private _metricsInitialized = false;
+  private _collectDefaultMetrics = false;
 
   public checkIntervalStarted: boolean = false;
 
@@ -56,6 +68,11 @@ class DependencyMonitor implements DependencyMonitorInterface {
       ttl: this._cacheDurationMs,
       refreshThreshold: this._refreshThresholdMs,
     });
+
+  // store prometheus options but delay initialization
+  this._promClient = options.promClient || promClient;
+  this._registry = options.registry;
+  this._collectDefaultMetrics = !!options.collectDefaultMetrics;
   }
 
   public startDependencyCheckInterval(): void {
@@ -96,7 +113,13 @@ class DependencyMonitor implements DependencyMonitorInterface {
           const start = Date.now();
           const checkResults = await dependency.check();
           const latencyMs = Date.now() - start;
-          return formatCheckResult(dependency, checkResults, latencyMs);
+          const status = formatCheckResult(
+            dependency,
+            checkResults,
+            latencyMs,
+          );
+          this._updateMetrics(status);
+            return status;
         },
         dependency.cacheDurationMs || this._cacheDurationMs,
         dependency.refreshThresholdMs || this._refreshThresholdMs,
@@ -112,6 +135,7 @@ class DependencyMonitor implements DependencyMonitorInterface {
         status,
         dependency.cacheDurationMs,
       );
+      this._updateMetrics(status);
       return status;
     }
   }
@@ -146,8 +170,79 @@ class DependencyMonitor implements DependencyMonitorInterface {
   }
 
   public async getPrometheusMetrics(): Promise<string> {
+    // If prom-client is available / configured use the registry; otherwise fall back to static formatting
+    await this._getAllDependenciesStatus(); // ensure gauges updated
+    if (this._initPromClient()) {
+      return this._registry.metrics();
+    }
     const statuses = await this._getAllDependenciesStatus();
-    return formatPrometheusMetrics(statuses);
+    return formatPrometheusMetrics(statuses); // legacy formatting
+  }
+
+  /**
+   * Returns the underlying prom-client Registry if initialized.
+   */
+  public getPrometheusRegistry() {
+    if (this._initPromClient()) return this._registry;
+    return undefined;
+  }
+
+  private _initPromClient(): boolean {
+    if (this._metricsInitialized) return true;
+    try {
+      if (!this._registry) {
+        this._registry = new this._promClient.Registry();
+        if (this._collectDefaultMetrics) {
+          this._promClient.collectDefaultMetrics({
+            register: this._registry,
+          });
+        }
+      }
+
+      const latencyName = 'dependency_latency_ms';
+      const healthName = 'dependency_health';
+
+      const existingLatency = this._registry.getSingleMetric(latencyName);
+      this._latencyGauge =
+        existingLatency ||
+        new this._promClient.Gauge({
+          name: latencyName,
+          help: 'Last dependency check latency in milliseconds',
+          labelNames: ['dependency'],
+          registers: [this._registry],
+        });
+
+      const existingHealth = this._registry.getSingleMetric(healthName);
+      this._healthGauge =
+        existingHealth ||
+        new this._promClient.Gauge({
+          name: healthName,
+          help: 'Dependency health status (0=OK,1=WARNING,2=CRITICAL)',
+          labelNames: ['dependency', 'impact'],
+          registers: [this._registry],
+        });
+
+      this._metricsInitialized = true;
+      return true;
+    } catch (e) {
+      // prom-client not installed or failed; suppress
+      return false;
+    }
+  }
+
+  private _updateMetrics(status: DependencyStatus) {
+    if (!this._initPromClient()) return;
+    if (!this._latencyGauge || !this._healthGauge) return;
+    const { name, impact, health } = status;
+    const state = health.state;
+    const value =
+      state === 'OK'
+        ? 0
+        : state === 'WARNING'
+        ? 1
+        : 2; /* CRITICAL */
+    this._latencyGauge.set({ dependency: name }, health.latency);
+    this._healthGauge.set({ dependency: name, impact: impact || '' }, value);
   }
 }
 
