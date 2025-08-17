@@ -325,19 +325,6 @@ describe('DependencyMonitor', () => {
       expect(metrics).toMatch(/dependency_health\{dependency="api",impact="Some features degraded"} 1/);
     });
     describe('prom-client integration', () => {
-      it('falls back to legacy formatting when prom-client init fails', async () => {
-        const badPromClient: any = {}; // missing Registry -> will cause _initPromClient to throw
-        const monitor = new DependencyMonitor({ promClient: badPromClient });
-        monitor.register({
-          name: 'legacy',
-          description: 'Legacy dependency',
-          impact: 'None',
-          check: async () => ({ code: SUCCESS_STATUS_CODE }),
-        });
-        const metrics = await monitor.getPrometheusMetrics();
-        expect(metrics).toContain('# HELP dependency_health'); // legacy formatter marker
-      });
-    
       it('handles repeated metrics calls (init short-circuit)', async () => {
         const registry = new promClient.Registry();
         const monitor = new DependencyMonitor({
@@ -355,5 +342,37 @@ describe('DependencyMonitor', () => {
         expect(first).toContain('dependency_latency_ms{dependency="svc"}');
         expect(second).toContain('dependency_health{dependency="svc",impact="Degraded responses"} 0');
       });
-    })
+    });
+  it('getPrometheusRegistry() returns registry', async () => {
+    const registry = new promClient.Registry();
+    const monitor = new DependencyMonitor({ promClient, registry });
+    monitor.register({
+      name: 'redis',
+      description: 'Redis cache',
+      impact: 'Cache latency may increase',
+      check: async () => ({ code: SUCCESS_STATUS_CODE }),
+    });
+    expect(monitor.getPrometheusRegistry()).toBe(registry);
+  });
+  it('collectDefaultMetrics option enables default metrics', async () => {
+    const monitor = new DependencyMonitor({ promClient, collectDefaultMetrics: true });
+    monitor.register({
+      name: 'redis',
+      description: 'Redis cache',
+      impact: 'Cache latency may increase',
+      check: async () => ({ code: SUCCESS_STATUS_CODE }),
+    });
+    const metrics = await monitor.getPrometheusMetrics();
+    expect(metrics).toContain('# HELP process_cpu_seconds_total'); // default metric
+  });
+  it('emits metrics with blank impact when impact not provided', async () => {
+    const monitor = new DependencyMonitor({ promClient });
+    monitor.register({
+      name: 'noimpact',
+      description: 'No impact dep',
+      check: async () => ({ code: SUCCESS_STATUS_CODE }),
+    } as any);
+    const metrics = await monitor.getPrometheusMetrics();
+    expect(metrics).toMatch(/dependency_health\{dependency="noimpact",impact=""} 0/);
+  });
 });

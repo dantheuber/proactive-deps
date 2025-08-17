@@ -82,4 +82,9 @@ export interface DependencyMonitorInterface {
    * // dependency_latency{dependency="Database"} 50
    */
   getPrometheusMetrics(): Promise<string>;
+  /**
+   * Returns the underlying prom-client Registry used for metrics.
+   * Metrics are always enabled; this method never returns undefined.
+   */
+  getPrometheusRegistry(): any;
 }

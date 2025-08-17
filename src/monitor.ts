@@ -14,7 +14,6 @@ import {
   DependencyStatus,
 } from './types';
 import formatCheckResult from './lib/format-check-result';
-import formatPrometheusMetrics from './lib/format-prometheus-metrics';
 
 // Prometheus support is optional; we lazy-require prom-client only if metrics are requested
 // Using loose any typing to avoid forcing downstream consumers to install @types/prom-client
@@ -36,8 +35,8 @@ class DependencyMonitor implements DependencyMonitorInterface {
   private _cacheDurationMs: number = DEFAULT_CACHE_DURATION_MS;
   private _checkIntervalMs: number = DEFAULT_CHECK_INTERVAL_MS;
   // prom-client related (all optional / lazy)
-  private _promClient?: PromClientModule;
-  private _registry?: any; // use any to avoid requiring prom-client types for consumers
+  private _promClient: PromClientModule;
+  private _registry: any; // use any to avoid requiring prom-client types for consumers
   private _latencyGauge?: any;
   private _healthGauge?: any;
   private _metricsInitialized = false;
@@ -69,10 +68,12 @@ class DependencyMonitor implements DependencyMonitorInterface {
       refreshThreshold: this._refreshThresholdMs,
     });
 
-  // store prometheus options but delay initialization
+  // store prometheus options and eagerly ensure prom-client presence
   this._promClient = options.promClient || promClient;
-  this._registry = options.registry;
+  this._registry = options.registry; // may be undefined; created during _initPromClient
   this._collectDefaultMetrics = !!options.collectDefaultMetrics;
+  // Eagerly initialize metrics so they are always available
+  this._initPromClient();
   }
 
   public startDependencyCheckInterval(): void {
@@ -170,79 +171,64 @@ class DependencyMonitor implements DependencyMonitorInterface {
   }
 
   public async getPrometheusMetrics(): Promise<string> {
-    // If prom-client is available / configured use the registry; otherwise fall back to static formatting
-    await this._getAllDependenciesStatus(); // ensure gauges updated
-    if (this._initPromClient()) {
-      return this._registry.metrics();
-    }
-    const statuses = await this._getAllDependenciesStatus();
-    return formatPrometheusMetrics(statuses); // legacy formatting
+    await this._getAllDependenciesStatus(); // ensure gauges updated before render
+    this._initPromClient();
+    return this._registry.metrics();
   }
 
   /**
    * Returns the underlying prom-client Registry if initialized.
    */
   public getPrometheusRegistry() {
-    if (this._initPromClient()) return this._registry;
-    return undefined;
+    this._initPromClient();
+    return this._registry;
   }
 
   private _initPromClient(): boolean {
     if (this._metricsInitialized) return true;
-    try {
-      if (!this._registry) {
-        this._registry = new this._promClient.Registry();
-        if (this._collectDefaultMetrics) {
-          this._promClient.collectDefaultMetrics({
-            register: this._registry,
-          });
-        }
+    if (!this._registry) {
+      this._registry = new this._promClient.Registry();
+      if (this._collectDefaultMetrics) {
+        this._promClient.collectDefaultMetrics({
+          register: this._registry,
+        });
       }
-
-      const latencyName = 'dependency_latency_ms';
-      const healthName = 'dependency_health';
-
-      const existingLatency = this._registry.getSingleMetric(latencyName);
-      this._latencyGauge =
-        existingLatency ||
-        new this._promClient.Gauge({
-          name: latencyName,
-          help: 'Last dependency check latency in milliseconds',
-          labelNames: ['dependency'],
-          registers: [this._registry],
-        });
-
-      const existingHealth = this._registry.getSingleMetric(healthName);
-      this._healthGauge =
-        existingHealth ||
-        new this._promClient.Gauge({
-          name: healthName,
-          help: 'Dependency health status (0=OK,1=WARNING,2=CRITICAL)',
-          labelNames: ['dependency', 'impact'],
-          registers: [this._registry],
-        });
-
-      this._metricsInitialized = true;
-      return true;
-    } catch (e) {
-      // prom-client not installed or failed; suppress
-      return false;
     }
+
+    const latencyName = 'dependency_latency_ms';
+    const healthName = 'dependency_health';
+
+    const existingLatency = this._registry.getSingleMetric(latencyName);
+    this._latencyGauge =
+      existingLatency ||
+      new this._promClient.Gauge({
+        name: latencyName,
+        help: 'Last dependency check latency in milliseconds',
+        labelNames: ['dependency'],
+        registers: [this._registry],
+      });
+
+    const existingHealth = this._registry.getSingleMetric(healthName);
+    this._healthGauge =
+      existingHealth ||
+      new this._promClient.Gauge({
+        name: healthName,
+        help: 'Dependency health status (0=OK,1=WARNING,2=CRITICAL)',
+        labelNames: ['dependency', 'impact'],
+        registers: [this._registry],
+      });
+
+    this._metricsInitialized = true;
+    return true;
   }
 
   private _updateMetrics(status: DependencyStatus) {
-    if (!this._initPromClient()) return;
-    if (!this._latencyGauge || !this._healthGauge) return;
+    this._initPromClient();
     const { name, impact, health } = status;
-    const state = health.state;
-    const value =
-      state === 'OK'
-        ? 0
-        : state === 'WARNING'
-        ? 1
-        : 2; /* CRITICAL */
-    this._latencyGauge.set({ dependency: name }, health.latency);
-    this._healthGauge.set({ dependency: name, impact: impact || '' }, value);
+    const valueMap: Record<string, number> = { OK: 0, WARNING: 1, CRITICAL: 2 };
+    const value = valueMap[health.state];
+    this._latencyGauge!.set({ dependency: name }, health.latency);
+    this._healthGauge!.set({ dependency: name, impact: impact || '' }, value);
   }
 }
 
