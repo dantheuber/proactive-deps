@@ -1,5 +1,6 @@
 import { createCache, Cache as CacheManagerCache } from 'cache-manager';
 import promClient from 'prom-client';
+import type { Registry, Gauge } from 'prom-client';
 import {
   DEFAULT_CHECK_INTERVAL_MS,
   DEFAULT_CACHE_DURATION_MS,
@@ -14,10 +15,6 @@ import {
   DependencyStatus,
 } from './types';
 import formatCheckResult from './lib/format-check-result';
-
-// Prometheus support is optional; we lazy-require prom-client only if metrics are requested
-// Using loose any typing to avoid forcing downstream consumers to install @types/prom-client
-type PromClientModule = any;
 
 /**
  * DependencyMonitor is a class that monitors the status of various dependencies
@@ -34,11 +31,11 @@ class DependencyMonitor implements DependencyMonitorInterface {
   private _refreshThresholdMs: number = DEFAULT_REFRESH_THRESHOLD_MS;
   private _cacheDurationMs: number = DEFAULT_CACHE_DURATION_MS;
   private _checkIntervalMs: number = DEFAULT_CHECK_INTERVAL_MS;
-  // prom-client related (all optional / lazy)
-  private _promClient: PromClientModule;
-  private _registry: any; // use any to avoid requiring prom-client types for consumers
-  private _latencyGauge?: any;
-  private _healthGauge?: any;
+  // Prometheus registry (created lazily if not provided via options)
+  private _registry?: Registry;
+  // Gauges for dependency latency and health. Label generics reflect configured label names.
+  private _latencyGauge?: Gauge<'dependency'>;
+  private _healthGauge?: Gauge<'dependency' | 'impact'>;
   private _metricsInitialized = false;
   private _collectDefaultMetrics = false;
 
@@ -68,8 +65,7 @@ class DependencyMonitor implements DependencyMonitorInterface {
       refreshThreshold: this._refreshThresholdMs,
     });
 
-    // store prometheus options and eagerly ensure prom-client presence
-    this._promClient = options.promClient || promClient;
+    // prometheus options
     this._registry = options.registry; // may be undefined; created during _initPromClient
     this._collectDefaultMetrics = !!options.collectDefaultMetrics;
     // Eagerly initialize metrics so they are always available
@@ -169,7 +165,7 @@ class DependencyMonitor implements DependencyMonitorInterface {
   public async getPrometheusMetrics(): Promise<string> {
     await this._getAllDependenciesStatus(); // ensure gauges updated before render
     this._initPromClient();
-    return this._registry.metrics();
+  return this._registry!.metrics();
   }
 
   /**
@@ -183,9 +179,9 @@ class DependencyMonitor implements DependencyMonitorInterface {
   private _initPromClient(): boolean {
     if (this._metricsInitialized) return true;
     if (!this._registry) {
-      this._registry = new this._promClient.Registry();
+      this._registry = new promClient.Registry();
       if (this._collectDefaultMetrics) {
-        this._promClient.collectDefaultMetrics({
+        promClient.collectDefaultMetrics({
           register: this._registry,
         });
       }
@@ -194,20 +190,20 @@ class DependencyMonitor implements DependencyMonitorInterface {
     const latencyName = 'dependency_latency_ms';
     const healthName = 'dependency_health';
 
-    const existingLatency = this._registry.getSingleMetric(latencyName);
+    const existingLatency = this._registry.getSingleMetric(latencyName) as Gauge<'dependency'> | undefined;
     this._latencyGauge =
       existingLatency ||
-      new this._promClient.Gauge({
+      new promClient.Gauge<'dependency'>({
         name: latencyName,
         help: 'Last dependency check latency in milliseconds',
         labelNames: ['dependency'],
         registers: [this._registry],
       });
 
-    const existingHealth = this._registry.getSingleMetric(healthName);
+    const existingHealth = this._registry.getSingleMetric(healthName) as Gauge<'dependency' | 'impact'> | undefined;
     this._healthGauge =
       existingHealth ||
-      new this._promClient.Gauge({
+      new promClient.Gauge<'dependency' | 'impact'>({
         name: healthName,
         help: 'Dependency health status (0=OK,1=WARNING,2=CRITICAL)',
         labelNames: ['dependency', 'impact'],

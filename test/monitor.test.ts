@@ -297,7 +297,7 @@ describe('DependencyMonitor', () => {
   });
   it('registers and updates gauges using injected registry', async () => {
     const registry = new promClient.Registry();
-    const monitor = new DependencyMonitor({ promClient, registry });
+    const monitor = new DependencyMonitor({ registry });
 
     monitor.register({
       name: 'redis',
@@ -336,7 +336,6 @@ describe('DependencyMonitor', () => {
     it('handles repeated metrics calls (init short-circuit)', async () => {
       const registry = new promClient.Registry();
       const monitor = new DependencyMonitor({
-        promClient,
         registry,
       });
       monitor.register({
@@ -355,7 +354,7 @@ describe('DependencyMonitor', () => {
   });
   it('getPrometheusRegistry() returns registry', async () => {
     const registry = new promClient.Registry();
-    const monitor = new DependencyMonitor({ promClient, registry });
+    const monitor = new DependencyMonitor({ registry });
     monitor.register({
       name: 'redis',
       description: 'Redis cache',
@@ -366,7 +365,6 @@ describe('DependencyMonitor', () => {
   });
   it('collectDefaultMetrics option enables default metrics', async () => {
     const monitor = new DependencyMonitor({
-      promClient,
       collectDefaultMetrics: true,
     });
     monitor.register({
@@ -379,7 +377,7 @@ describe('DependencyMonitor', () => {
     expect(metrics).toContain('# HELP process_cpu_seconds_total'); // default metric
   });
   it('emits metrics with blank impact when impact not provided', async () => {
-    const monitor = new DependencyMonitor({ promClient });
+    const monitor = new DependencyMonitor({});
     monitor.register({
       name: 'noimpact',
       description: 'No impact dep',

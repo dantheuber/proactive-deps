@@ -33,15 +33,9 @@ export type DependencyMonitorOptions = {
    */
   checkIntervalMs?: number;
   /**
-   * Optional prom-client module instance override to use for metrics. If not provided, the default
-   * installed prom-client dependency is used. Metrics are always enabled; an error is thrown if
-   * prom-client cannot be loaded.
+   * Optional existing prom-client Registry instance to register metrics with. If omitted a new Registry is created.
    */
-  promClient?: any;
-  /**
-   * Optional existing Registry instance to register metrics with. If omitted a new Registry is created.
-   */
-  registry?: any;
+  registry?: import('prom-client').Registry;
   /**
    * When true and a new Registry is created internally, default process metrics will also be collected.
    */
