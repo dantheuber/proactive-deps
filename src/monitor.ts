@@ -1,4 +1,6 @@
 import { createCache, Cache as CacheManagerCache } from 'cache-manager';
+import promClient from 'prom-client';
+import type { Registry, Gauge } from 'prom-client';
 import {
   DEFAULT_CHECK_INTERVAL_MS,
   DEFAULT_CACHE_DURATION_MS,
@@ -13,7 +15,6 @@ import {
   DependencyStatus,
 } from './types';
 import formatCheckResult from './lib/format-check-result';
-import formatPrometheusMetrics from './lib/format-prometheus-metrics';
 
 /**
  * DependencyMonitor is a class that monitors the status of various dependencies
@@ -30,6 +31,13 @@ class DependencyMonitor implements DependencyMonitorInterface {
   private _refreshThresholdMs: number = DEFAULT_REFRESH_THRESHOLD_MS;
   private _cacheDurationMs: number = DEFAULT_CACHE_DURATION_MS;
   private _checkIntervalMs: number = DEFAULT_CHECK_INTERVAL_MS;
+  // Prometheus registry (created lazily if not provided via options)
+  private _registry?: Registry;
+  // Gauges for dependency latency and health. Label generics reflect configured label names.
+  private _latencyGauge?: Gauge<'dependency'>;
+  private _healthGauge?: Gauge<'dependency' | 'impact'>;
+  private _metricsInitialized = false;
+  private _collectDefaultMetrics = false;
 
   public checkIntervalStarted: boolean = false;
 
@@ -56,6 +64,12 @@ class DependencyMonitor implements DependencyMonitorInterface {
       ttl: this._cacheDurationMs,
       refreshThreshold: this._refreshThresholdMs,
     });
+
+    // prometheus options
+    this._registry = options.registry; // may be undefined; created during _initPromClient
+    this._collectDefaultMetrics = !!options.collectDefaultMetrics;
+    // Eagerly initialize metrics so they are always available
+    this._initPromClient();
   }
 
   public startDependencyCheckInterval(): void {
@@ -96,7 +110,9 @@ class DependencyMonitor implements DependencyMonitorInterface {
           const start = Date.now();
           const checkResults = await dependency.check();
           const latencyMs = Date.now() - start;
-          return formatCheckResult(dependency, checkResults, latencyMs);
+          const status = formatCheckResult(dependency, checkResults, latencyMs);
+          this._updateMetrics(status);
+          return status;
         },
         dependency.cacheDurationMs || this._cacheDurationMs,
         dependency.refreshThresholdMs || this._refreshThresholdMs,
@@ -112,6 +128,7 @@ class DependencyMonitor implements DependencyMonitorInterface {
         status,
         dependency.cacheDurationMs,
       );
+      this._updateMetrics(status);
       return status;
     }
   }
@@ -146,8 +163,68 @@ class DependencyMonitor implements DependencyMonitorInterface {
   }
 
   public async getPrometheusMetrics(): Promise<string> {
-    const statuses = await this._getAllDependenciesStatus();
-    return formatPrometheusMetrics(statuses);
+    await this._getAllDependenciesStatus(); // ensure gauges updated before render
+    this._initPromClient();
+    return this._registry!.metrics();
+  }
+
+  /**
+   * Returns the underlying prom-client Registry if initialized.
+   */
+  public getPrometheusRegistry() {
+    this._initPromClient();
+    return this._registry;
+  }
+
+  private _initPromClient(): boolean {
+    if (this._metricsInitialized) return true;
+    if (!this._registry) {
+      this._registry = new promClient.Registry();
+      if (this._collectDefaultMetrics) {
+        promClient.collectDefaultMetrics({
+          register: this._registry,
+        });
+      }
+    }
+
+    const latencyName = 'dependency_latency_ms';
+    const healthName = 'dependency_health';
+
+    const existingLatency = this._registry.getSingleMetric(latencyName) as
+      | Gauge<'dependency'>
+      | undefined;
+    this._latencyGauge =
+      existingLatency ||
+      new promClient.Gauge<'dependency'>({
+        name: latencyName,
+        help: 'Last dependency check latency in milliseconds',
+        labelNames: ['dependency'],
+        registers: [this._registry],
+      });
+
+    const existingHealth = this._registry.getSingleMetric(healthName) as
+      | Gauge<'dependency' | 'impact'>
+      | undefined;
+    this._healthGauge =
+      existingHealth ||
+      new promClient.Gauge<'dependency' | 'impact'>({
+        name: healthName,
+        help: 'Dependency health status (0=OK,1=WARNING,2=CRITICAL)',
+        labelNames: ['dependency', 'impact'],
+        registers: [this._registry],
+      });
+
+    this._metricsInitialized = true;
+    return true;
+  }
+
+  private _updateMetrics(status: DependencyStatus) {
+    this._initPromClient();
+    const { name, impact, health } = status;
+    const valueMap: Record<string, number> = { OK: 0, WARNING: 1, CRITICAL: 2 };
+    const value = valueMap[health.state];
+    this._latencyGauge!.set({ dependency: name }, health.latency);
+    this._healthGauge!.set({ dependency: name, impact: impact }, value);
   }
 }
 

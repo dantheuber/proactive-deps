@@ -1,36 +1,25 @@
-# 🛠️ proactive-deps
+# proactive-deps
 
-Proactive Dependency Checks for Node.js Projects
+Lightweight, cached, proactive dependency health checks for Node.js services.
 
-`proactive-deps` is a lightweight Node.js library that makes it easy to monitor the health of your app’s runtime dependencies. It lets you define custom async checks for critical external services—like databases, APIs, queues, etc.—and provides real-time status tracking, latency metrics, and Prometheus-style exports.
+Define async checks (DBs, REST APIs, queues, etc.), get structured status + latency, and expose Prometheus metrics (via `prom-client`) out-of-the-box.
 
-## 🔍 Why Use This?
+## Features
 
-Long-running services often depend on external systems, and when those go down, it can cause confusing or delayed failures. proactive-deps helps you proactively detect issues before they become full outages—without adding brittle health check logic to your app’s core business logic.
+- Simple registration of dependency checks
+- Per‑dependency TTL + refresh threshold (cache-manager under the hood)
+- Latency + health gauges for Prometheus
+- Optional collection of Node default metrics
+- Skippable checks (e.g. for local dev / disabled services)
+- TypeScript first (ships types)
 
-## 🚀 Features
-
-- ✅ Custom async health checks per dependency
-- 🧠 Smart result caching (set TTL per dependency)
-- 📈 Built-in latency tracking
-- 📊 Prometheus-style metrics export
-- 🧪 Live status summaries for dashboards or alerts
-
-## 📦 Installation
+## Install
 
 ```bash
 npm install proactive-deps
 ```
 
-## ⚙️ Usage
-
-#### Starting and Stopping the Dependency Check Interval
-
-Once you have registered your dependencies, you must call `monitor.startDependencyCheckInterval()` to start the automated interval that periodically checks the status of all registered dependencies. This ensures that the health of your dependencies is monitored continuously at the configured interval.
-
-If you need to stop the automated checks (e.g., during application shutdown or maintenance), you can call `monitor.stopDependencyCheckInterval()` to stop the interval.
-
-### Registering a Dependency
+## Quick Start
 
 ```js
 import {
@@ -39,12 +28,18 @@ import {
   ERROR_STATUS_CODE,
 } from 'proactive-deps';
 
-const monitor = new DependencyMonitor();
+const monitor = new DependencyMonitor({
+  // Optional: turn on prom-client default metrics & tweak intervals
+  collectDefaultMetrics: true,
+  checkIntervalMs: 15000,
+  cacheDurationMs: 60000,
+  refreshThresholdMs: 5000,
+});
 
 monitor.register({
   name: 'redis',
-  description: 'Redis cache layer',
-  impact: 'Responses may be slower due to missing cache.',
+  description: 'Redis cache',
+  impact: 'Responses may be slower (cache miss path).',
   check: async () => {
     try {
       // Simulate a health check (e.g., ping Redis)
@@ -58,8 +53,8 @@ monitor.register({
       }; // Unhealthy status with error details
     }
   },
-  cacheDurationMs: 10000, // Cache results for 10 seconds
-  refreshThresholdMs: 5000, // Refresh results if older than 5 seconds
+  cacheDurationMs: 10000, // (optional) override default cache TTL
+  refreshThresholdMs: 5000, // (optional) pre-emptive refresh window
   checkDetails: {
     type: 'database',
     server: 'localhost',
@@ -71,18 +66,7 @@ monitor.register({
 monitor.startDependencyCheckInterval();
 ```
 
-### Using the `skip` Boolean
-
-The `skip` boolean allows you to mark a dependency as skipped, meaning its health check will not be executed. Skipped dependencies are considered healthy by default, with a latency of `0` and the `skipped` flag set to `true`.
-
-#### Why Would You Want to Skip a Dependency?
-
-There are several scenarios where skipping a dependency might be useful:
-
-- **Temporarily Disabled Services**: If a service is temporarily offline or not in use, you can skip its health check to avoid unnecessary errors or alerts.
-- **Development or Testing**: During development or testing, you might want to skip certain dependencies that are not yet implemented or are mocked.
-
-#### Example with a Skipped Dependency
+### Skipping a Dependency
 
 ```js
 monitor.register({
@@ -97,33 +81,7 @@ monitor.register({
 });
 ```
 
-When a dependency is skipped, its status will look like this:
-
-```js
-{
-  name: 'external-service',
-  description: 'An external service that is temporarily disabled',
-  impact: 'No impact since this service is currently unused.',
-  healthy: true,
-  health: {
-    state: 'OK',
-    code: 0,
-    latency: 0,
-    skipped: true,
-  },
-  lastChecked: '2025-04-13T12:00:00Z',
-}
-```
-
-### Why Use `checkDetails`?
-
-The `checkDetails` property allows you to provide additional metadata about the dependency being monitored. This can be useful for:
-
-- **Debugging**: Including details like the server, database name, or API endpoint can help quickly identify the source of an issue.
-- **Monitoring Dashboards**: Exposing `checkDetails` in status summaries or metrics can provide more context for operations teams.
-- **Custom Alerts**: Use `checkDetails` to include specific information in alerts, such as the type of dependency or its criticality.
-
-#### Example with REST API Dependency
+### REST API Example
 
 ```js
 monitor.register({
@@ -157,49 +115,16 @@ monitor.register({
 });
 ```
 
-### What Should a Dependency Check Return?
+### Return Shape
 
-A registered dependency check can return either a status code or an object with additional details.
+Checker returns either:
 
-#### When Healthy:
+- `SUCCESS_STATUS_CODE` (number) or
+- `{ code, error?, errorMessage? }`
 
-You can return just the status code:
+`skip: true` short‑circuits to an OK result with `latency: 0` and `skipped: true`.
 
-```js
-SUCCESS_STATUS_CODE;
-```
-
-Or an object with the status code:
-
-```js
-{
-  code: SUCCESS_STATUS_CODE,
-}
-```
-
-- `code`: A status code indicating success (e.g., `SUCCESS_STATUS_CODE`).
-- `error`: Should be `undefined` when the dependency is healthy.
-- `errorMessage`: Should be `undefined` when the dependency is healthy.
-
-#### When Errors Are Encountered:
-
-You can return an object with the status code and optional error details:
-
-```js
-{
-  code: ERROR_STATUS_CODE,
-  error: new Error('Connection failed'),
-  errorMessage: 'Redis connection failed',
-}
-```
-
-- `code`: A status code indicating an error (e.g., `ERROR_STATUS_CODE`).
-- `error`: An `Error` object describing the issue.
-- `errorMessage`: A string describing the error in detail.
-
-This flexibility allows you to return a simple status code for healthy dependencies or provide detailed error information when issues are encountered. The structure ensures consistency across all dependency checks and allows the monitor to handle and report errors effectively.
-
-### Getting Current Status
+### Fetch All Statuses
 
 ```js
 const statuses = await monitor.getAllStatuses();
@@ -222,7 +147,7 @@ console.log(statuses);
 // ];
 ```
 
-### Getting the Status of a Specific Dependency
+### Single Dependency
 
 ```js
 const status = await monitor.getStatus('redis');
@@ -243,43 +168,55 @@ console.log(status);
 // }
 ```
 
-### Prometheus Metrics Output
+## Prometheus Metrics
+
+The monitor lazily initializes `prom-client` gauges (or uses the provided registry):
+
+- `dependency_latency_ms{dependency}` – last check latency (ms)
+- `dependency_health{dependency,impact}` – health state (0 OK, 1 WARNING, 2 CRITICAL)
+
+Enable default Node metrics by passing `collectDefaultMetrics: true` to the constructor.
 
 ```js
 const metrics = await monitor.getPrometheusMetrics();
 console.log(metrics);
 /*
-# HELP dependency_latency_ms Latency of dependency checks in milliseconds
+# HELP dependency_latency_ms Last dependency check latency in milliseconds
 # TYPE dependency_latency_ms gauge
 dependency_latency_ms{dependency="redis"} 5
 
-# HELP dependency_health Whether the dependency is currently healthy (0 = healthy, 1 = unhealthy)
+# HELP dependency_health Dependency health status (0=OK,1=WARNING,2=CRITICAL)
 # TYPE dependency_health gauge
-dependency_health{dependency="redis", impact="Responses may be slower due to missing cache."} 0
+dependency_health{dependency="redis",impact="Responses may be slower (cache miss path)."} 0
 */
 ```
 
-## 📖 API Documentation
+### Example Server (PokeAPI Demo)
+
+See `example/server.js` for a pure Node HTTP server exposing:
+
+- `/pokemon/:name` – live pass‑through to PokeAPI
+- `/dependencies` – JSON array of current statuses
+- `/metrics` – Prometheus text output
+
+Run it locally:
+
+```bash
+npm run build
+node example/server.js
+```
+
+## API Docs
 
 For detailed API documentation, refer to the [docs](https://dantheuber.github.io/proactive-deps).
 
-## 🧠 Philosophy
+## Roadmap (abridged)
 
-Other tools might let you know that a dependency was broken when you find out the hard way. `proactive-deps` helps you know in advance, by making it dead simple to wrap, register, and expose active health checks for the services your app relies on.
+- Built-in helper for common /metrics endpoint
+- Optional retry / backoff helpers
+- Alert hooks (Slack, email)
+- Pluggable cache stores
 
-## 🧪 Ideal Use Cases
-
-- Embedding in HTTP services to power `/health` or `/metrics` endpoints
-- Scheduled checks that alert on failure via cron or background workers
-- Internal monitoring dashboards for systems that depend on flaky external services
-
-## 🛣️ Future Plans
-
-- [ ] Built-in Prometheus metrics endpoint handler
-- [ ] Retry logic with exponential backoff
-- [ ] Custom alert hooks (email, Slack, etc.)
-- [ ] Custom cache stores.
-
-## 📄 License
+## License
 
 MIT © 2025 Daniel Essig

@@ -32,4 +32,12 @@ export type DependencyMonitorOptions = {
    * @default 15000
    */
   checkIntervalMs?: number;
+  /**
+   * Optional existing prom-client Registry instance to register metrics with. If omitted a new Registry is created.
+   */
+  registry?: import('prom-client').Registry;
+  /**
+   * When true and a new Registry is created internally, default process metrics will also be collected.
+   */
+  collectDefaultMetrics?: boolean;
 };
